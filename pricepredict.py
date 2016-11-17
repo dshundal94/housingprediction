@@ -24,8 +24,8 @@ from sklearn.neighbors import KNeighborsClassifier
 
 
 #Reading in the csv file, this is the training set
-data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold.csv')
-test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing.csv')
+data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold2.csv')
+test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing2.csv')
 
 #extract and remove targets from training data 
 targets = data['Selling Price']
@@ -208,12 +208,12 @@ def process_dates():
     season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
     test = pd.concat([test, season_test_dummies], axis =1)
 
-    #Now we encode dummy variables for the years
-    year_dummies = pd.get_dummies(data['Year'], prefix = 'Year')
-    data = pd.concat([data, year_dummies], axis = 1)
+    #Now we encode dummy variables for the years ****Don't need dummy variables anymore, since data has more samples, then just 2015, 2016***
+    # year_dummies = pd.get_dummies(data['Year'], prefix = 'Year')
+    # data = pd.concat([data, year_dummies], axis = 1)
 
-    year_test_dummies = pd.get_dummies(test['Year'], prefix = 'Year')
-    test = pd.concat([test, year_test_dummies], axis = 1)
+    # year_test_dummies = pd.get_dummies(test['Year'], prefix = 'Year')
+    # test = pd.concat([test, year_test_dummies], axis = 1)
 
     #Create column with years in integer before dropping the string version
     data['intYear'] = data.Year.astype(int)
@@ -310,9 +310,9 @@ def create_dates():
     #We don't need seasons anymore
     data.drop('Season', axis = 1, inplace = True)
     test.drop('Season', axis = 1, inplace = True)
-    #And don't need intYear anymore
-    data.drop('intYear', axis = 1, inplace = True)
-    test.drop('intYear', axis = 1, inplace = True)
+    #And don't need intYear anymore ***Actually let's keep this in and see what's up***
+    # data.drop('intYear', axis = 1, inplace = True)
+    # test.drop('intYear', axis = 1, inplace = True)
 
 
     status('All Dates')
@@ -374,7 +374,7 @@ def recover_train_test_target():
     global data
     global test
     
-    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold.csv')
+    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold2.csv')
     
     targets = train0['Selling Price']
     train = data
@@ -395,6 +395,9 @@ print features.sort_values(['importance'], ascending = False)
 model = SelectFromModel(clf, prefit = True)
 train_new = model.transform(train)
 train_new.shape
+
+print data.info()
+print test.info()
 
 test_new = model.transform(test)
 test_new.shape
@@ -421,24 +424,24 @@ print gaussian.score(train_new, targets)
 
 forest = RandomForestClassifier(max_features='auto')
 
-parameter_grid = {
-                 'max_depth' : [4,5,6,7,8],
-                 'n_estimators': [200,210,240,250],
-                 'criterion': ['gini','entropy']
-                 }
+# parameter_grid = {
+#                  'max_depth' : [4,5,6,7,8],
+#                  'n_estimators': [200,210,240,250],
+#                  'criterion': ['gini','entropy']
+#                  }
 
-cross_validation = StratifiedKFold(targets, n_folds=5)
+# cross_validation = StratifiedKFold(targets, n_folds=5)
 
-grid_search = GridSearchCV(forest,
-                           param_grid=parameter_grid,
-                           cv=cross_validation)
+# grid_search = GridSearchCV(forest,
+#                            param_grid=parameter_grid,
+#                            cv=cross_validation)
 
-grid_search.fit(train_new, targets)
+# grid_search.fit(train_new, targets)
 
-print('Best score: {}'.format(grid_search.best_score_))
-print('Best parameters: {}'.format(grid_search.best_params_))
-
-output = grid_search.predict(test_new).astype(int)
+# print('Best score: {}'.format(grid_search.best_score_))
+# print('Best parameters: {}'.format(grid_search.best_params_))
+forest.fit(train_new, targets)
+output = forest.predict(test_new).astype(int)
 df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
