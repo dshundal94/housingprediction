@@ -426,8 +426,8 @@ def recover_train_test_target():
     return train,test,targets
 
 
-train,test,targets = recover_train_test_target()
-clf = ExtraTreesClassifier(n_estimators = 500)
+train, test, targets = recover_train_test_target()
+clf = ExtraTreesClassifier(n_estimators = 150)
 clf = clf.fit(train, targets)
 
 features = pd.DataFrame()
