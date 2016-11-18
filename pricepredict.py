@@ -1,3 +1,11 @@
+# ***This script creates a model to predict housing prices in Lodi, CA with
+# zipcodes 95240 and 95242. In the future, if model is accurate based on mean squared error
+# then will generalize to include many more zip codes. I find that Random Forest does not work
+# quite well to model the prediction, and my best bet would be to fine tune regression paramaters
+# or try using Ridge Regression to deal with multicollinearity. **** --By Damanjit Hundal 
+
+
+
 import pandas as pd
 import csv as csv
 import numpy as np
@@ -21,14 +29,9 @@ from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
 
 
-
-
 #Reading in the csv file, this is the training set
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
 test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
-
-print data.info()
-print test.info()
 
 #extract and remove targets from training data 
 targets = data['Selling Price']
@@ -38,21 +41,6 @@ data.drop('Selling Price', axis = 1, inplace = True)
 test.drop('Selling Price', axis = 1, inplace = True)
 data.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 test.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
-
-#Drawing a linear model between square feet and lot size
-# square_feet = data['Square Feet']
-# lot_size = data['Lot Size(AC)']
-# fit = np.polyfit(square_feet, lot_size, deg = 1)
-# fig, ax = plt.subplots()
-# ax.plot(square_feet, fit[0] * square_feet + fit[1], color = 'red')
-# ax.scatter(square_feet, lot_size)
-# ax.set_xlabel('Square Feet')
-# ax.set_ylabel('Lot Size(AC)')
-# ax.set_title('Square Feet Vs Lot Size(Acres)')
-# plt.show()
-
-# print test.info()
-# print 'first'
 
 #This will tell us if our particular part of code ran
 def status(feature):
@@ -88,21 +76,6 @@ def get_bath():
 
 get_bath()
 
-
-#get the zip code from the address --don't need to extract zip code anymore
-# def zip_code():
-#     data['Zip Code'] = data["Address"].map(lambda address: address.split('CA')[1].split('-')[0].strip())
-#     test['Zip Code'] = test['Address'].map(lambda address: address.split('CA')[1].split('-')[0].strip())
-
-# zip_code()
-# # print test.info()
-# # print 'second'
-
-# grouped = data.groupby('Zip Code')
-# groupedTest = test.groupby('Zip Code')
-# grouped.median()
-# groupedTest.median()
-
 #Hardcoding the lot size based off median of zipcode. will generalize later to include all zip codes. 
 def process_lotsize():
     global data
@@ -118,11 +91,9 @@ def process_lotsize():
     status('Lot Size - Sq Ft')
 process_lotsize()
 
-# print test.info()
-# print 'third'
+
 
 #Harcode the year built, will generalize for all zip codes later
-
 def process_yearBuilt():
     global data
     global test
@@ -137,8 +108,6 @@ def process_yearBuilt():
     status('Year Built')
 
 process_yearBuilt()
-# print test.info()
-# print 'fourth'
 
 #Use binary option to show zipcodes
 def process_area():
@@ -163,28 +132,21 @@ def process_area():
 
 process_area()
 
-# print test.info()
-# print 'fifth'
+
 
 #Drop variables we don't need
-
 def drop_strings():
 
     global data
     global test
 
-    # data.drop('Pending Date', axis = 1, inplace = True)
     data.drop('Selling Date', axis = 1, inplace = True)
-    # data.drop('Type', axis = 1, inplace = True)
 
     #The test data does not have a pending date or a sold date
-    # test.drop('Type', axis = 1, inplace = True)
     test.drop('Pending Date', axis = 1, inplace = True)
     test.drop('Selling Date', axis = 1, inplace = True)
 
 drop_strings()
-# print test.info()
-# print 'sixth'
 
 #Split the listing date into months and years
 def get_dates():
@@ -204,9 +166,6 @@ def get_dates():
     status("Get Dates")
 
 get_dates()
-
-# print test.info()
-# print 'seventh'
 
 #Now we're going to process our dates
 def process_dates():
@@ -243,31 +202,21 @@ def process_dates():
     season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
     test = pd.concat([test, season_test_dummies], axis =1)
 
-    #Now we encode dummy variables for the years ****Don't need dummy variables anymore, since data has more samples, then just 2015, 2016***
-    # year_dummies = pd.get_dummies(data['Year'], prefix = 'Year')
-    # data = pd.concat([data, year_dummies], axis = 1)
-
-    # year_test_dummies = pd.get_dummies(test['Year'], prefix = 'Year')
-    # test = pd.concat([test, year_test_dummies], axis = 1)
-
     #Create column with years in integer before dropping the string version
     data['intYear'] = data.Year.astype(int)
     test['intYear'] = test.Year.astype(int)
 
     #Now we drop all the variables that we don't need
     data.drop('Year', axis = 1, inplace = True)
-    # data.drop('Season', axis = 1, inplace = True)
     data.drop('Month', axis = 1, inplace = True)
 
     test.drop('Year', axis = 1, inplace = True)
-    # test.drop('Season', axis = 1, inplace = True)
     test.drop('Month', axis = 1, inplace = True)
 
     status('Dates')
 
 process_dates()
-# print test.info()
-# print 'EIGHT'
+
 
 #Need to work on creating days on market column for test data
 def get_marketDate():
@@ -296,27 +245,10 @@ def get_marketDate():
     #Listing Date is a string we don't need anymore
     data.drop('Listing Date', axis = 1, inplace = True)
     data.drop('Pending Date', axis = 1, inplace = True)
-
-
-    # #create a list to store the difference in times
-    # temp = list()
-
-    #Need to convert listing date string to date format
-    #Didn't work because hard to convert to panda series after
-    # for i in range(len(data)):
-    #     formatDate = data['Listing Date']
-    #     dateList = datetime.strptime(formatDate[i], '%m/%d/%Y')
-    #     marketDate = datetime.utcnow() - dateList
-    #     data['Days on Market'] = marketDate.days
-    #     print dayDiff
-    # data['Days on Market'] = pd.Series(marketDate.days)
-    # print data['Days on Market']
     
     status('Market Day Diff')
 
 get_marketDate()
-# print test.info()
-# print 'Nine'
 
 #Input test data with today's date in sold column 
 # and change type of data's sold date from string to datetime
@@ -324,10 +256,6 @@ def create_dates():
     global data
     global test
 
-    #These are in datetime64[ns] type format, instead of object
-    # test['Pending Date'] = test['Pending Date'].fillna(date.today())
-    # test['Pending Date'] = pd.to_datetime(test['Pending Date'])
-    # data['Pending Date'] = pd.to_datetime(data['Pending Date'])
 
     #Want to feature seasons multiplied with years sold
 
@@ -361,10 +289,6 @@ def create_dates():
 
 create_dates()
 
-#I want to be able to create learning methods for time series data
-
-
-
 #Need to scale all the features so they are normalized
 def scale_all_features():
     
@@ -383,32 +307,6 @@ scale_all_features()
 print data.info()
 print test.info()
 
-# def drop_least_important():
-
-#     global data
-#     global test
-
-#     data.drop('Zip Code_95240', axis = 1, inplace = True)
-#     data.drop('Season_Spring', axis = 1, inplace = True)
-#     data.drop('Season_Winter', axis = 1, inplace = True)
-#     data.drop('Season_Summer', axis = 1, inplace = True)
-#     data.drop('Season_Fall', axis = 1, inplace = True)
-#     data.drop('Zip Code_95242', axis = 1, inplace = True)
-#     data.drop('Year_2015', axis = 1, inplace = True)
-#     data.drop('Year_2016', axis = 1, inplace = True)
-
-#     test.drop('Zip Code_95240', axis = 1, inplace = True)
-#     test.drop('Season_Spring', axis = 1, inplace = True)
-#     test.drop('Season_Winter', axis = 1, inplace = True)
-#     test.drop('Season_Summer', axis = 1, inplace = True)
-#     test.drop('Season_Fall', axis = 1, inplace = True)
-#     test.drop('Zip Code_95242', axis = 1, inplace = True)
-#     test.drop('Year_2015', axis = 1, inplace = True)
-#     test.drop('Year_2016', axis = 1, inplace = True)
-
-#     status('Drop Least Important')
-
-# drop_least_important()
 
 def compute_score(clf, X, y,scoring='accuracy'):
     xval = cross_val_score(clf, X, y, cv = 5,scoring=scoring)
