@@ -453,8 +453,11 @@ Y_pred = logreg.predict(test)
 print logreg.score(train, targets)
 
 #K-nearest neighbours
-knn = KNeighborsClassifier(n_neighbors = 5)
+knn = KNeighborsClassifier()
 knn.fit(train_new, targets)
+KNeighborsClassifier(algorithm = 'auto', leaf_size = 30, metric='minkowski',
+           metric_params = None, n_jobs = 1, n_neighbors = 5, p = 2,
+           weights =  'uniform')
 Y_prediction = knn.predict(test_new)
 print knn.score(train_new, targets)
 
