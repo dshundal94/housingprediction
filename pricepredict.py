@@ -54,19 +54,49 @@ def status(feature):
 
     print 'Processing',feature,': ok'
 
-#get the zip code from the address
-def zip_code():
-    data['Zip Code'] = data["Address"].map(lambda address: address.split('CA')[1].split('-')[0].strip())
-    test['Zip Code'] = test['Address'].map(lambda address: address.split('CA')[1].split('-')[0].strip())
+#If House has pool, then assign a 1, otherwise a 0. 
+def get_pool():
 
-zip_code()
-# print test.info()
-# print 'second'
+    Pool_dict = {
+                    "YESY": "1",
+                    "NONO": "0"
+                }
+    data['Pool'] = data.Pool.map(Pool_dict).astype(int)
+    test['Pool'] = test.Pool.map(Pool_dict).astype(int)
 
-grouped = data.groupby('Zip Code')
-groupedTest = test.groupby('Zip Code')
-grouped.median()
-groupedTest.median()
+get_pool()
+
+#Combine Half bathroom with full bathrooms
+def get_bath():
+    data['Bathrooms - Half'] = data['Bathrooms - Half'] / 2
+    data['Total Bathrooms'] = data['Bathrooms - Full'] + data['Bathrooms - Half']
+
+    test['Bathrooms - Half'] = test['Bathrooms - Half'] / 2
+    test['Total Bathrooms'] = test['Bathrooms - Full'] + test['Bathrooms - Half']
+
+    #Drop Half and Full bathrooms, because feature redundant
+    data.drop('Bathrooms - Full', axis = 1, inplace = True)
+    data.drop('Bathrooms - Half', axis = 1, inplace = True)
+
+    test.drop('Bathrooms - Full', axis = 1, inplace = True)
+    test.drop('Bathrooms - Half', axis = 1, inplace = True)
+
+get_bath()
+
+
+#get the zip code from the address --don't need to extract zip code anymore
+# def zip_code():
+#     data['Zip Code'] = data["Address"].map(lambda address: address.split('CA')[1].split('-')[0].strip())
+#     test['Zip Code'] = test['Address'].map(lambda address: address.split('CA')[1].split('-')[0].strip())
+
+# zip_code()
+# # print test.info()
+# # print 'second'
+
+# grouped = data.groupby('Zip Code')
+# groupedTest = test.groupby('Zip Code')
+# grouped.median()
+# groupedTest.median()
 
 #Hardcoding the lot size based off median of zipcode. will generalize later to include all zip codes. 
 def process_lotsize():
@@ -74,13 +104,13 @@ def process_lotsize():
     global test
 
     def fillLotSize(row):
-        if row['Zip Code'] == '95240':
-            return 0.13950
-        elif row['Zip Code'] == '95242':
-            return 0.15045
-    data['Lot Size(AC)'] = data.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size(AC)']) else r['Lot Size(AC)'], axis = 1)
-    test['Lot Size(AC)'] = test.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size(AC)']) else r['Lot Size(AC)'], axis = 1)
-    status('Lot Size(AC)')
+        if row['Address - Zip Code'] == '95240':
+            return 5756
+        elif row['Address - Zip Code'] == '95242':
+            return 6456
+    data['Lot Size - Sq Ft'] = data.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    test['Lot Size - Sq Ft'] = test.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    status('Lot Size - Sq Ft')
 process_lotsize()
 
 # print test.info()
@@ -93,10 +123,10 @@ def process_yearBuilt():
     global test
 
     def fillYearBuilt(row):
-        if row['Zip Code'] == '95240':
-            return 1952
-        elif row['Zip Code'] == '95242':
-            return 1969
+        if row['Address - Zip Code'] == '95240':
+            return 1963
+        elif row['Address - Zip Code'] == '95242':
+            return 1985
     data['Year Built'] = data.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     test['Year Built'] = test.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     status('Year Built')
@@ -115,14 +145,14 @@ def process_area():
     test.drop('Address', axis = 1, inplace = True)
 
     #encode dummy variables
-    zipcode_dummies = pd.get_dummies(data['Zip Code'], prefix = 'Zip Code')
+    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
     data = pd.concat([data, zipcode_dummies], axis = 1)
 
-    zipcode_test_dummies = pd.get_dummies(test['Zip Code'], prefix = 'Zip Code')
+    zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
     test = pd.concat([test, zipcode_test_dummies], axis = 1)
     #remove the zip code title
-    data.drop('Zip Code', axis = 1, inplace = True)
-    test.drop('Zip Code', axis = 1, inplace = True)
+    data.drop('Address - Zip Code', axis = 1, inplace = True)
+    test.drop('Address - Zip Code', axis = 1, inplace = True)
 
     status('Zip Code')
 
@@ -138,14 +168,14 @@ def drop_strings():
     global data
     global test
 
-    data.drop('Pending Date', axis = 1, inplace = True)
-    data.drop('Sold Date', axis = 1, inplace = True)
-    data.drop('Type', axis = 1, inplace = True)
+    # data.drop('Pending Date', axis = 1, inplace = True)
+    data.drop('Selling Date', axis = 1, inplace = True)
+    # data.drop('Type', axis = 1, inplace = True)
 
     #The test data does not have a pending date or a sold date
-    test.drop('Type', axis = 1, inplace = True)
+    # test.drop('Type', axis = 1, inplace = True)
     test.drop('Pending Date', axis = 1, inplace = True)
-    test.drop('Sold Date', axis = 1, inplace = True)
+    test.drop('Selling Date', axis = 1, inplace = True)
 
 drop_strings()
 # print test.info()
@@ -246,14 +276,21 @@ def get_marketDate():
     test['diff'] = test['temp'].map(lambda x: datetime.utcnow() - x)
     test['Days on Market'] = (test['diff'] / np.timedelta64(1, 'D')).astype(int)
 
+    #Need to create Days on Market for training data
+    data['Listing Date'] = pd.to_datetime(data['Listing Date'])
+    data['Pending Date'] = pd.to_datetime(data['Pending Date'])
+    data['Days on Market'] = data['Pending Date'] - data['Listing Date']
+    data['Days on Market'] = (data['Days on Market'] / np.timedelta64(1, 'D')).astype(int)
+
     #Now we drop all the variables we don't need
     test.drop('temp', axis = 1, inplace = True)
     test.drop('diff', axis = 1, inplace = True)
     test.drop('Listing Date', axis = 1, inplace = True)
-    test.drop('Market Days', axis = 1, inplace = True)
+    # test.drop('Market Days', axis = 1, inplace = True)
 
     #Listing Date is a string we don't need anymore
     data.drop('Listing Date', axis = 1, inplace = True)
+    data.drop('Pending Date', axis = 1, inplace = True)
 
 
     # #create a list to store the difference in times
