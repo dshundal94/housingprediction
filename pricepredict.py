@@ -24,8 +24,8 @@ from sklearn.neighbors import KNeighborsClassifier
 
 
 #Reading in the csv file, this is the training set
-data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold2.csv')
-test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing2.csv')
+data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
+test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
 
 #extract and remove targets from training data 
 targets = data['Selling Price']
@@ -374,7 +374,7 @@ def recover_train_test_target():
     global data
     global test
     
-    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold2.csv')
+    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
     
     targets = train0['Selling Price']
     train = data
