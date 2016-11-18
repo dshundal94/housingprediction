@@ -27,12 +27,17 @@ from sklearn.neighbors import KNeighborsClassifier
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
 test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
 
+print data.info()
+print test.info()
+
 #extract and remove targets from training data 
 targets = data['Selling Price']
 origList_Price = test['Listing Price']
 orig_address = test['Address']
 data.drop('Selling Price', axis = 1, inplace = True)
 test.drop('Selling Price', axis = 1, inplace = True)
+data.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
+test.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 
 #Drawing a linear model between square feet and lot size
 # square_feet = data['Square Feet']
@@ -123,9 +128,9 @@ def process_yearBuilt():
     global test
 
     def fillYearBuilt(row):
-        if row['Address - Zip Code'] == '95240':
+        if row['Address - Zip Code'] == 95240:
             return 1963
-        elif row['Address - Zip Code'] == '95242':
+        elif row['Address - Zip Code'] == 95242:
             return 1985
     data['Year Built'] = data.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     test['Year Built'] = test.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
@@ -375,6 +380,8 @@ def scale_all_features():
     print 'Features scaled successfully !'
 
 scale_all_features()
+print data.info()
+print test.info()
 
 # def drop_least_important():
 
@@ -420,7 +427,7 @@ def recover_train_test_target():
 
 
 train,test,targets = recover_train_test_target()
-clf = ExtraTreesClassifier(n_estimators = 200)
+clf = ExtraTreesClassifier(n_estimators = 500)
 clf = clf.fit(train, targets)
 
 features = pd.DataFrame()
