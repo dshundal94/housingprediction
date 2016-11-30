@@ -119,11 +119,11 @@ def process_area():
     test.drop('Address', axis = 1, inplace = True)
 
     #encode dummy variables
-    # zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
-    # data = pd.concat([data, zipcode_dummies], axis = 1)
+    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
+    data = pd.concat([data, zipcode_dummies], axis = 1)
 
-    # zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
-    # test = pd.concat([test, zipcode_test_dummies], axis = 1)
+    zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
+    test = pd.concat([test, zipcode_test_dummies], axis = 1)
     #remove the zip code title
     data.drop('Address - Zip Code', axis = 1, inplace = True)
     test.drop('Address - Zip Code', axis = 1, inplace = True)
@@ -173,34 +173,34 @@ def process_dates():
     global data
     global test
 
-    # data['Season'] = data['Month']
-    # test['Season'] = test['Month']
+    data['Season'] = data['Month']
+    test['Season'] = test['Month']
 
-    # Date_Dictionary = {
-    #                     "1":    "Winter",
-    #                     "2":    "Winter",
-    #                     "3":    "Winter",
-    #                     "4":    "Spring",
-    #                     "5":    "Spring",
-    #                     "6":    "Spring",
-    #                     "7":    "Summer",
-    #                     "8":    "Summer",
-    #                     "9":    "Summer",
-    #                     "10":   "Fall",
-    #                     "11":   "Fall",
-    #                     "12":   "Fall"
-    #                     }
+    Date_Dictionary = {
+                        "1":    "Winter",
+                        "2":    "Winter",
+                        "3":    "Winter",
+                        "4":    "Spring",
+                        "5":    "Spring",
+                        "6":    "Spring",
+                        "7":    "Summer",
+                        "8":    "Summer",
+                        "9":    "Summer",
+                        "10":   "Fall",
+                        "11":   "Fall",
+                        "12":   "Fall"
+                        }
 
-    # # We have to map each season
-    # data['Season'] = data.Season.map(Date_Dictionary)
-    # test['Season'] = test.Season.map(Date_Dictionary)
+    # We have to map each season
+    data['Season'] = data.Season.map(Date_Dictionary)
+    test['Season'] = test.Season.map(Date_Dictionary)
 
-    # #Encode dummy variables for the seasons
-    # season_dummies = pd.get_dummies(data['Season'], prefix = 'Season')
-    # data = pd.concat([data, season_dummies], axis =1)
+    #Encode dummy variables for the seasons
+    season_dummies = pd.get_dummies(data['Season'], prefix = 'Season')
+    data = pd.concat([data, season_dummies], axis =1)
 
-    # season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
-    # test = pd.concat([test, season_test_dummies], axis =1)
+    season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
+    test = pd.concat([test, season_test_dummies], axis =1)
 
     #Create column with years in integer before dropping the string version
     data['intYear'] = data.Year.astype(int)
@@ -260,27 +260,27 @@ def create_dates():
     #Want to feature seasons multiplied with years sold
     #Don't need this anymore
 
-    # data['featuredDate'] = data['Season']
-    # test['featuredDate'] = test['Season']
+    data['featuredDate'] = data['Season']
+    test['featuredDate'] = test['Season']
 
-    # season_dict = {
-    #                 "Winter":   "1",
-    #                 "Spring":   "2",
-    #                 "Summer":   "3", 
-    #                 "Fall":     "4"
-    #                 }
+    season_dict = {
+                    "Winter":   "1",
+                    "Spring":   "2",
+                    "Summer":   "3", 
+                    "Fall":     "4"
+                    }
 
-    # #Map this onto the featuredData column
-    # data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
-    # test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
+    #Map this onto the featuredData column
+    data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
+    test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
 
-    # # Multiply intYear by featuredDate to get new category
-    # data['featuredDate'] = data['featuredDate'] * data['intYear']
-    # test['featuredDate'] = test['featuredDate'] * test['intYear'] 
+    # Multiply intYear by featuredDate to get new category
+    data['featuredDate'] = data['featuredDate'] * data['intYear']
+    test['featuredDate'] = test['featuredDate'] * test['intYear'] 
     
     #We don't need seasons anymore
-    # data.drop('Season', axis = 1, inplace = True)
-    # test.drop('Season', axis = 1, inplace = True)
+    data.drop('Season', axis = 1, inplace = True)
+    test.drop('Season', axis = 1, inplace = True)
     #And don't need intYear anymore ***Actually let's keep this in and see what's up***
     # data.drop('intYear', axis = 1, inplace = True)
     # test.drop('intYear', axis = 1, inplace = True)
@@ -339,18 +339,11 @@ train_new.shape
 test_new = model.transform(test)
 test_new.shape
 
-#Logistic Regression
-logreg = LogisticRegression()
-logreg.fit(train, targets)
-Y_pred = logreg.predict(test)
-print logreg.score(train, targets)
-
 #Linear Regression
 linReg = linear_model.LinearRegression()
 linReg.fit(train, targets)
 Y_lin_pred = linReg.predict(test)
 print linReg.score(train, targets)
-
 
 #K-nearest neighbours
 knn = KNeighborsRegressor()
@@ -361,11 +354,6 @@ KNeighborsRegressor(algorithm = 'auto', leaf_size = 30, metric = 'minkowski',
 Y_prediction = knn.predict(test_new)
 print knn.score(train_new, targets)
 
-#Gaussian Naive Bayes, just here so I know how to implement, mainly used for classification problems
-gaussian = GaussianNB()
-gaussian.fit(train_new, targets)
-Y_prediction1 = gaussian.predict(test_new)
-print gaussian.score(train_new, targets)
 
 #hyperparameters tuning
 
@@ -394,13 +382,6 @@ df_output['Predicted Selling Price'] = output
 df_output['Address'] = orig_address
 df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/rfPred.csv',index=False)
 
-#For logistic regression output
-logOut = Y_pred
-df1_output = pd.DataFrame()
-df1_output['Listing Price'] = origList_Price
-df1_output['Predicted Selling Price'] = logOut
-df1_output['Address'] = orig_address
-df1_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/logisticPred.csv',index=False)
 
 #For Linear Regression
 linOut = Y_lin_pred
@@ -418,12 +399,3 @@ df2_output['Listing Price'] = origList_Price
 df2_output['Predicted Selling Price'] = kOut
 df2_output['Address'] = orig_address
 df2_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/knnPred.csv',index=False)
-
-#And just for fun we will do Naive Bayes
-
-nbOut = Y_pred
-df3_output = pd.DataFrame()
-df3_output['Listing Price'] = origList_Price
-df3_output['Predicted Selling Price'] = nbOut
-df3_output['Address'] = orig_address
-df3_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/nbPred.csv',index=False)
