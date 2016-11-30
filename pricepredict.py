@@ -27,6 +27,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn import linear_model
 
 
 #Reading in the csv file, this is the training set
@@ -34,12 +35,19 @@ data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
 test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
 
 #extract and remove targets from training data 
-targets = data['Selling Price']
 origList_Price = test['Listing Price']
+train = data.loc[0:3600, :]
+cv = data.loc[3601:, :]
+orig_cv_price = cv['Listing Price']
+targets = train['Selling Price']
+test_check = cv['Selling Price']
+orig_check_address = cv['Address']
 orig_address = test['Address']
-data.drop('Selling Price', axis = 1, inplace = True)
+train.drop('Selling Price', axis = 1, inplace = True)
+cv.drop('Selling Price', axis = 1, inplace = True)
 test.drop('Selling Price', axis = 1, inplace = True)
-data.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
+train.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
+cv.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 test.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 
 #This will tell us if our particular part of code ran
@@ -54,22 +62,29 @@ def get_pool():
                     "YESY": "1",
                     "NONO": "0"
                 }
-    data['Pool'] = data.Pool.map(Pool_dict).astype(int)
+    train['Pool'] = train.Pool.map(Pool_dict).astype(int)
+    cv['Pool'] = cv.Pool.map(Pool_dict).astype(int)
     test['Pool'] = test.Pool.map(Pool_dict).astype(int)
 
 get_pool()
 
 #Combine Half bathroom with full bathrooms
 def get_bath():
-    data['Bathrooms - Half'] = data['Bathrooms - Half'] / 2
-    data['Total Bathrooms'] = data['Bathrooms - Full'] + data['Bathrooms - Half']
+    train['Bathrooms - Half'] = train['Bathrooms - Half'] / 2
+    train['Total Bathrooms'] = train['Bathrooms - Full'] + train['Bathrooms - Half']
+
+    cv['Bathrooms - Half'] = cv['Bathrooms - Half'] / 2
+    cv['Total Bathrooms'] = cv['Bathrooms - Full'] + cv['Bathrooms - Half']
 
     test['Bathrooms - Half'] = test['Bathrooms - Half'] / 2
     test['Total Bathrooms'] = test['Bathrooms - Full'] + test['Bathrooms - Half']
 
     #Drop Half and Full bathrooms, because feature redundant
-    data.drop('Bathrooms - Full', axis = 1, inplace = True)
-    data.drop('Bathrooms - Half', axis = 1, inplace = True)
+    train.drop('Bathrooms - Full', axis = 1, inplace = True)
+    train.drop('Bathrooms - Half', axis = 1, inplace = True)
+
+    cv.drop('Bathrooms - Full', axis = 1, inplace = True)
+    cv.drop('Bathrooms - Half', axis = 1, inplace = True)
 
     test.drop('Bathrooms - Full', axis = 1, inplace = True)
     test.drop('Bathrooms - Half', axis = 1, inplace = True)
@@ -78,7 +93,8 @@ get_bath()
 
 #Hardcoding the lot size based off median of zipcode. will generalize later to include all zip codes. 
 def process_lotsize():
-    global data
+    global train
+    global cv
     global test
 
     def fillLotSize(row):
@@ -86,7 +102,8 @@ def process_lotsize():
             return 5756
         elif row['Address - Zip Code'] == '95242':
             return 6456
-    data['Lot Size - Sq Ft'] = data.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    train['Lot Size - Sq Ft'] = train.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    cv['Lot Size - Sq Ft'] = cv.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
     test['Lot Size - Sq Ft'] = test.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
     status('Lot Size - Sq Ft')
 process_lotsize()
@@ -95,7 +112,8 @@ process_lotsize()
 
 #Harcode the year built, will generalize for all zip codes later
 def process_yearBuilt():
-    global data
+    global train
+    global cv
     global test
 
     def fillYearBuilt(row):
@@ -103,7 +121,8 @@ def process_yearBuilt():
             return 1963
         elif row['Address - Zip Code'] == 95242:
             return 1985
-    data['Year Built'] = data.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
+    train['Year Built'] = train.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
+    cv['Year Built'] = cv.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     test['Year Built'] = test.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     status('Year Built')
 
@@ -111,21 +130,27 @@ process_yearBuilt()
 
 #Use binary option to show zipcodes
 def process_area():
-    global data
+    global train
+    global cv
     global test
 
     #Clean the address variable
-    data.drop('Address', axis = 1, inplace = True)
+    train.drop('Address', axis = 1, inplace = True)
+    cv.drop('Address', axis = 1, inplace = True)
     test.drop('Address', axis = 1, inplace = True)
 
     #encode dummy variables
-    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
-    data = pd.concat([data, zipcode_dummies], axis = 1)
+    zipcode_dummies = pd.get_dummies(train['Address - Zip Code'], prefix = 'Zip Code')
+    train = pd.concat([train, zipcode_dummies], axis = 1)
+
+    zipcode_dummies = pd.get_dummies(cv['Address - Zip Code'], prefix = 'Zip Code')
+    cv = pd.concat([cv, zipcode_dummies], axis = 1)
 
     zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
     test = pd.concat([test, zipcode_test_dummies], axis = 1)
     #remove the zip code title
-    data.drop('Address - Zip Code', axis = 1, inplace = True)
+    train.drop('Address - Zip Code', axis = 1, inplace = True)
+    cv.drop('Address - Zip Code', axis = 1, inplace = True)
     test.drop('Address - Zip Code', axis = 1, inplace = True)
 
     status('Zip Code')
@@ -137,10 +162,12 @@ process_area()
 #Drop variables we don't need
 def drop_strings():
 
-    global data
+    global train
+    global cv
     global test
 
-    data.drop('Selling Date', axis = 1, inplace = True)
+    train.drop('Selling Date', axis = 1, inplace = True)
+    cv.drop('Selling Date', axis = 1, inplace = True)
 
     #The test data does not have a pending date or a sold date
     test.drop('Pending Date', axis = 1, inplace = True)
@@ -151,12 +178,16 @@ drop_strings()
 #Split the listing date into months and years
 def get_dates():
 
-    global data
+    global train
+    global cv
     global test
 
     #get the months and years, not interested in the days
-    data['Month'] = data['Listing Date'].map(lambda listdate: listdate.split('/')[0].strip())
-    data['Year'] = data['Listing Date'].map(lambda listdate: listdate.split('/')[2].strip())
+    train['Month'] = train['Listing Date'].map(lambda listdate: listdate.split('/')[0].strip())
+    train['Year'] = train['Listing Date'].map(lambda listdate: listdate.split('/')[2].strip())
+
+    cv['Month'] = cv['Listing Date'].map(lambda listdate: listdate.split('/')[0].strip())
+    cv['Year'] = cv['Listing Date'].map(lambda listdate: listdate.split('/')[2].strip())
 
     #Now for the test data
     test['Month'] = test['Listing Date'].map(lambda listdate: listdate.split('/')[0].strip())
@@ -170,10 +201,12 @@ get_dates()
 #Now we're going to process our dates
 def process_dates():
 
-    global data
+    global train
+    global cv
     global test
 
-    data['Season'] = data['Month']
+    train['Season'] = train['Month']
+    cv['Season'] = cv['Month']
     test['Season'] = test['Month']
 
     Date_Dictionary = {
@@ -192,23 +225,31 @@ def process_dates():
                         }
 
     # We have to map each season
-    data['Season'] = data.Season.map(Date_Dictionary)
+    train['Season'] = train.Season.map(Date_Dictionary)
+    cv['Season'] = cv.Season.map(Date_Dictionary)
     test['Season'] = test.Season.map(Date_Dictionary)
 
     #Encode dummy variables for the seasons
-    season_dummies = pd.get_dummies(data['Season'], prefix = 'Season')
-    data = pd.concat([data, season_dummies], axis =1)
+    season_dummies = pd.get_dummies(train['Season'], prefix = 'Season')
+    train = pd.concat([train, season_dummies], axis =1)
+
+    season_dummies = pd.get_dummies(cv['Season'], prefix = 'Season')
+    cv = pd.concat([cv, season_dummies], axis =1)
 
     season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
     test = pd.concat([test, season_test_dummies], axis =1)
 
     #Create column with years in integer before dropping the string version
-    data['intYear'] = data.Year.astype(int)
+    train['intYear'] = train.Year.astype(int)
+    cv['intYear'] = cv.Year.astype(int)
     test['intYear'] = test.Year.astype(int)
 
     #Now we drop all the variables that we don't need
-    data.drop('Year', axis = 1, inplace = True)
-    data.drop('Month', axis = 1, inplace = True)
+    train.drop('Year', axis = 1, inplace = True)
+    train.drop('Month', axis = 1, inplace = True)
+    
+    cv.drop('Year', axis = 1, inplace = True)
+    cv.drop('Month', axis = 1, inplace = True)
 
     test.drop('Year', axis = 1, inplace = True)
     test.drop('Month', axis = 1, inplace = True)
@@ -221,7 +262,8 @@ process_dates()
 #Need to work on creating days on market column for test data
 def get_marketDate():
 
-    global test
+    global train
+    global cv
     global data
 
     #Can use datetime in panda series
@@ -231,10 +273,15 @@ def get_marketDate():
     test['Days on Market'] = (test['diff'] / np.timedelta64(1, 'D')).astype(int)
 
     #Need to create Days on Market for training data
-    data['Listing Date'] = pd.to_datetime(data['Listing Date'])
-    data['Pending Date'] = pd.to_datetime(data['Pending Date'])
-    data['Days on Market'] = data['Pending Date'] - data['Listing Date']
-    data['Days on Market'] = (data['Days on Market'] / np.timedelta64(1, 'D')).astype(int)
+    train['Listing Date'] = pd.to_datetime(train['Listing Date'])
+    train['Pending Date'] = pd.to_datetime(train['Pending Date'])
+    train['Days on Market'] = train['Pending Date'] - train['Listing Date']
+    train['Days on Market'] = (train['Days on Market'] / np.timedelta64(1, 'D')).astype(int)
+
+    cv['Listing Date'] = pd.to_datetime(cv['Listing Date'])
+    cv['Pending Date'] = pd.to_datetime(cv['Pending Date'])
+    cv['Days on Market'] = cv['Pending Date'] - cv['Listing Date']
+    cv['Days on Market'] = (cv['Days on Market'] / np.timedelta64(1, 'D')).astype(int)
 
     #Now we drop all the variables we don't need
     test.drop('temp', axis = 1, inplace = True)
@@ -243,8 +290,11 @@ def get_marketDate():
     # test.drop('Market Days', axis = 1, inplace = True)
 
     #Listing Date is a string we don't need anymore
-    data.drop('Listing Date', axis = 1, inplace = True)
-    data.drop('Pending Date', axis = 1, inplace = True)
+    train.drop('Listing Date', axis = 1, inplace = True)
+    train.drop('Pending Date', axis = 1, inplace = True)
+
+    cv.drop('Listing Date', axis = 1, inplace = True)
+    cv.drop('Pending Date', axis = 1, inplace = True)
     
     status('Market Day Diff')
 
@@ -253,32 +303,35 @@ get_marketDate()
 #Input test data with today's date in sold column 
 # and change type of data's sold date from string to datetime
 def create_dates():
-    global data
+    global train
+    global cv
     global test
 
 
     #Want to feature seasons multiplied with years sold
+    #Don't need this anymore
 
-    data['featuredDate'] = data['Season']
-    test['featuredDate'] = test['Season']
+    # data['featuredDate'] = data['Season']
+    # test['featuredDate'] = test['Season']
 
-    season_dict = {
-                    "Winter":   "1",
-                    "Spring":   "2",
-                    "Summer":   "3", 
-                    "Fall":     "4"
-                    }
+    # season_dict = {
+    #                 "Winter":   "1",
+    #                 "Spring":   "2",
+    #                 "Summer":   "3", 
+    #                 "Fall":     "4"
+    #                 }
 
-    #Map this onto the featuredData column
-    data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
-    test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
+    # #Map this onto the featuredData column
+    # data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
+    # test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
 
-    # Multiply intYear by featuredDate to get new category
-    data['featuredDate'] = data['featuredDate'] * data['intYear']
-    test['featuredDate'] = test['featuredDate'] * test['intYear'] 
+    # # Multiply intYear by featuredDate to get new category
+    # data['featuredDate'] = data['featuredDate'] * data['intYear']
+    # test['featuredDate'] = test['featuredDate'] * test['intYear'] 
     
     #We don't need seasons anymore
-    data.drop('Season', axis = 1, inplace = True)
+    train.drop('Season', axis = 1, inplace = True)
+    cv.drop('Season', axis = 1, inplace = True)
     test.drop('Season', axis = 1, inplace = True)
     #And don't need intYear anymore ***Actually let's keep this in and see what's up***
     # data.drop('intYear', axis = 1, inplace = True)
@@ -292,11 +345,15 @@ create_dates()
 #Need to scale all the features so they are normalized
 def scale_all_features():
     
-    global data
+    global train
+    global cv
     global test
     
-    features = list(data.columns)
-    data[features] = data[features].apply(lambda x: (x - x.mean()) / x.std(), axis = 0)
+    features = list(train.columns)
+    train[features] = train[features].apply(lambda x: (x - x.mean()) / x.std(), axis = 0)
+
+    features_cv = list(cv.columns)
+    cv[features] = cv[features].apply(lambda x: (x - x.mean()) / x.std(), axis = 0)
     
     features_test= list(test.columns)
     test[features_test] = test[features_test].apply(lambda x: (x - x.mean()) / x.std(), axis = 0)
@@ -304,27 +361,24 @@ def scale_all_features():
     print 'Features scaled successfully !'
 
 scale_all_features()
-print data.info()
-print test.info()
-
 
 def compute_score(clf, X, y,scoring='accuracy'):
-    xval = cross_val_score(clf, X, y, cv = 5,scoring=scoring)
+    xval = cross_val_score(clf, X, y, cv = 10,scoring=scoring)
     return np.mean(xval)
 
-def recover_train_test_target():
-    global data
-    global test
+# def recover_train_test_target():
+#     global data
+#     global test
     
-    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
+#     train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
     
-    targets = train0['Selling Price']
-    train = data
+#     targets = train0['Selling Price']
+#     train = data
     
-    return train,test,targets
+#     return train,test,targets
 
 
-train, test, targets = recover_train_test_target()
+# train, test, targets = recover_train_test_target()
 clf = ExtraTreesClassifier(n_estimators = 150)
 clf = clf.fit(train, targets)
 
@@ -338,17 +392,24 @@ model = SelectFromModel(clf, prefit = True)
 train_new = model.transform(train)
 train_new.shape
 
-print data.info()
-print test.info()
+cv_new = model.transform(cv)
+cv_new.shape
+
 
 test_new = model.transform(test)
 test_new.shape
 
 #Logistic Regression
 logreg = LogisticRegression()
-logreg.fit(train, targets)
-Y_pred = logreg.predict(test)
-print logreg.score(train, targets)
+logreg.fit(train_new, targets)
+Y_pred = logreg.predict(test_new)
+print logreg.score(train_new, targets)
+
+#Linear Regression (Multivariate)
+lin = linear_model.LinearRegression()
+lin.fit(train_new, targets)
+Y_lin = lin.predict(cv_new)
+print lin.score(train_new, targets)
 
 #K-nearest neighbours
 knn = KNeighborsClassifier()
@@ -400,6 +461,15 @@ df1_output['Listing Price'] = origList_Price
 df1_output['Predicted Selling Price'] = logOut
 df1_output['Address'] = orig_address
 df1_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/logisticPred.csv',index=False)
+
+linOut = Y_lin
+dfx_output = pd.DataFrame()
+dfx_output['Listing Price'] = orig_cv_price
+dfx_output['Predicted Selling Price'] = linOut
+dfx_output['Address'] = orig_address
+dfx_output['Actual Selling Price'] = test_check
+dfx_output['Mean Squared Error'] = ((dfx_output['Actual Selling Price'] - dfx_output['Predicted Selling Price']) ** 2).mean(axis = 0)
+dfx_output[['Address', 'Listing Price','Predicted Selling Price', 'Actual Selling Price', "Mean Squared Error"]].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/linRegPred.csv',index=False)
 
 #For K-Nearest Neighbors prediction
 kOut = Y_prediction
