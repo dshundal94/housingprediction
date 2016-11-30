@@ -20,7 +20,7 @@ from sklearn.feature_selection import SelectFromModel
 from sklearn.feature_selection import SelectKBest
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.grid_search import GridSearchCV
-from sklearn.ensemble.gradient_boosting import GradientBoostingClassifier
+from sklearn import ensemble
 from sklearn.cross_validation import cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.linear_model import LogisticRegression
@@ -28,6 +28,7 @@ from sklearn.svm import SVC, LinearSVC
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn import linear_model
+from sklearn.metrics import mean_squared_error
 
 #Reading in the csv file, this is the training set
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
@@ -323,6 +324,15 @@ def recover_train_test_target():
 
 
 train, test, targets = recover_train_test_target()
+
+
+
+
+#computing test set deviance 
+# test_score = np.zeros((params['n_estimators'],), dtype = np.float64)
+# for i, y_pred in enumerate(cl.staged_predict(X_test)):
+#     test_score[i] = clf.loss_(y_test, y_pred)
+
 clf = ExtraTreesRegressor(n_estimators = 150)
 clf = clf.fit(train, targets)
 
@@ -339,11 +349,19 @@ train_new.shape
 test_new = model.transform(test)
 test_new.shape
 
+#Gradient Boosting 
+
+params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
+          'learning_rate': 0.01, 'loss': 'ls'}
+cl = ensemble.GradientBoostingRegressor(**params)
+cl.fit(train_new, targets)
+Y_grad_pred = cl.predict(test_new)
+
 #Linear Regression
 linReg = linear_model.LinearRegression()
-linReg.fit(train, targets)
-Y_lin_pred = linReg.predict(test)
-print linReg.score(train, targets)
+linReg.fit(train_new, targets)
+Y_lin_pred = linReg.predict(test_new)
+print linReg.score(train_new, targets)
 
 #K-nearest neighbours
 knn = KNeighborsRegressor()
@@ -382,6 +400,13 @@ df_output['Predicted Selling Price'] = output
 df_output['Address'] = orig_address
 df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/rfPred.csv',index=False)
 
+#For Gradient Boosting 
+gradOut = Y_grad_pred
+df_grad = pd.DataFrame()
+df_grad['Listing Price'] = origList_Price
+df_grad['Predicted Selling Price'] = gradOut
+df_grad['Address'] = orig_address
+df_grad[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/gradPred.csv',index=False)
 
 #For Linear Regression
 linOut = Y_lin_pred
