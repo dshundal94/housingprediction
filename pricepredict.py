@@ -376,11 +376,11 @@ parameter_grid = {
                  'n_estimators': [200,210,230,250,270,300]
                  }
 
-cross_validation = StratifiedKFold(targets, n_folds = 5)
+# cross_validation = StratifiedKFold(targets, n_folds = 5)
 
 grid_search = GridSearchCV(forest,
                            param_grid = parameter_grid,
-                           cv = cross_validation)
+                           cv = 5)
 
 grid_search.fit(train_new, targets)
 
