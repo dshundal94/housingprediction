@@ -5,7 +5,6 @@
 # or try using Ridge Regression to deal with multicollinearity. **** --By Damanjit Hundal 
 
 
-
 import pandas as pd
 import csv as csv
 import numpy as np
@@ -23,16 +22,21 @@ from sklearn.grid_search import GridSearchCV
 from sklearn import ensemble
 from sklearn.cross_validation import cross_val_score
 from sklearn.pipeline import make_pipeline
-from sklearn.linear_model import LogisticRegression
 from sklearn.svm import SVC, LinearSVC
-from sklearn.naive_bayes import GaussianNB
-from sklearn.neighbors import KNeighborsRegressor
 from sklearn import linear_model
 from sklearn.metrics import mean_squared_error
+from keras.models import Sequential
+from keras.layers import Dense
+from keras.wrappers.scikit_learn import KerasRegressor
+from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
 
 #Reading in the csv file, this is the training set
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
 test = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
+
+dataset = data.values
 
 #extract and remove targets from training data 
 targets = data['Selling Price']
@@ -282,11 +286,7 @@ def create_dates():
     #We don't need seasons anymore
     data.drop('Season', axis = 1, inplace = True)
     test.drop('Season', axis = 1, inplace = True)
-    #And don't need intYear anymore ***Actually let's keep this in and see what's up***
-    # data.drop('intYear', axis = 1, inplace = True)
-    # test.drop('intYear', axis = 1, inplace = True)
-
-
+    
     status('All Dates')
 
 create_dates()
@@ -353,6 +353,70 @@ params = {
 gradBoost = ensemble.GradientBoostingRegressor(**params)
 gradBoost.fit(train_new, targets)
 Y_grad_pred = gradBoost.predict(test_new)
+
+#Neural Network using Keras
+def baseline_model():
+    # create model
+    model = Sequential()
+    model.add(Dense(19, input_dim = 19, init = 'normal', activation = 'relu'))
+    model.add(Dense(1, init = 'normal'))
+    # Compile model
+    model.compile(loss = 'mean_squared_error', optimizer = 'adam')
+    return model
+
+# fix random seed for reproducibility
+seed = 7
+np.random.seed(seed)
+# evaluate model with standardized dataset
+estimator = KerasRegressor(build_fn = baseline_model, nb_epoch = 100, batch_size = 5, verbose=0)
+
+# evaluate model with standardized dataset
+np.random.seed(seed)
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasRegressor(build_fn = baseline_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
+pipeline = Pipeline(estimators)
+# kfold = KFold(n_splits = 10, random_state = seed)
+results = cross_val_score(pipeline, train, targets, cv = 5)
+print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+
+def larger_model():
+    # create model
+    model = Sequential()
+    model.add(Dense(19, input_dim=19, init='normal', activation='relu'))
+    model.add(Dense(6, init='normal', activation='relu'))
+    model.add(Dense(1, init='normal'))
+    # Compile model
+    model.compile(loss='mean_squared_error', optimizer='adam')
+    return model
+
+np.random.seed(seed)
+estimator = []
+estimator.append(('standardize', StandardScaler()))
+estimator.append(('mlp', KerasRegressor(build_fn = larger_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
+pipeline1 = Pipeline(estimator)
+# kfold1 = KFold(n_splits = 10, random_state = seed)
+results1 = cross_val_score(pipeline1, train, targets, cv = 5)
+print("Larger: %.2f (%.2f) MSE" % (results1.mean(), results1.std()))
+
+def wider_model():
+    # create model
+    model = Sequential()
+    model.add(Dense(26, input_dim = 19, init = 'normal', activation = 'relu'))
+    model.add(Dense(1, init = 'normal'))
+    # Compile model
+    model.compile(loss = 'mean_squared_error', optimizer = 'adam')
+    return model
+
+np.random.seed(seed)
+estimators = []
+estimators.append(('standardize', StandardScaler()))
+estimators.append(('mlp', KerasRegressor(build_fn = wider_model, nb_epoch = 100, batch_size = 5, verbose = 0)))
+pipeline2 = Pipeline(estimators)
+# kfold2 = KFold(n_splits = 10, random_state = seed)
+results2 = cross_val_score(pipeline2, train, targets, cv = 5)
+print("Wider: %.2f (%.2f) MSE" % (results2.mean(), results2.std()))
+
 
 
 #Linear Regression
