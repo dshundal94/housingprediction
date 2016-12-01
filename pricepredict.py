@@ -361,16 +361,6 @@ linReg.fit(train_new, targets)
 Y_lin_pred = linReg.predict(test_new)
 print linReg.score(train_new, targets)
 
-#K-nearest neighbours
-knn = KNeighborsRegressor()
-knn.fit(train_new, targets)
-KNeighborsRegressor(algorithm = 'auto', leaf_size = 30, metric = 'minkowski',
-           metric_params = None, n_jobs = 1, n_neighbors = 7, p = 2,
-           weights =  'uniform')
-Y_prediction = knn.predict(test_new)
-print knn.score(train_new, targets)
-
-
 #hyperparameters tuning
 
 forest = RandomForestRegressor(max_features = 'auto')
@@ -413,12 +403,3 @@ dfx_output['Listing Price'] = origList_Price
 dfx_output['Predicted Selling Price'] = linOut
 dfx_output['Address'] = orig_address
 dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/linRegPred.csv',index=False)
-
-
-#For K-Nearest Neighbors prediction
-kOut = Y_prediction
-df2_output = pd.DataFrame()
-df2_output['Listing Price'] = origList_Price
-df2_output['Predicted Selling Price'] = kOut
-df2_output['Address'] = orig_address
-df2_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/knnPred.csv',index=False)
