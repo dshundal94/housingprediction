@@ -124,11 +124,11 @@ def process_area():
     test.drop('Address', axis = 1, inplace = True)
 
     #encode dummy variables
-    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
-    data = pd.concat([data, zipcode_dummies], axis = 1)
+    # zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
+    # data = pd.concat([data, zipcode_dummies], axis = 1)
 
-    zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
-    test = pd.concat([test, zipcode_test_dummies], axis = 1)
+    # zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
+    # test = pd.concat([test, zipcode_test_dummies], axis = 1)
     #remove the zip code title
     data.drop('Address - Zip Code', axis = 1, inplace = True)
     test.drop('Address - Zip Code', axis = 1, inplace = True)
@@ -178,34 +178,34 @@ def process_dates():
     global data
     global test
 
-    data['Season'] = data['Month']
-    test['Season'] = test['Month']
+    # data['Season'] = data['Month']
+    # test['Season'] = test['Month']
 
-    Date_Dictionary = {
-                        "1":    "Winter",
-                        "2":    "Winter",
-                        "3":    "Winter",
-                        "4":    "Spring",
-                        "5":    "Spring",
-                        "6":    "Spring",
-                        "7":    "Summer",
-                        "8":    "Summer",
-                        "9":    "Summer",
-                        "10":   "Fall",
-                        "11":   "Fall",
-                        "12":   "Fall"
-                        }
+    # Date_Dictionary = {
+    #                     "1":    "Winter",
+    #                     "2":    "Winter",
+    #                     "3":    "Winter",
+    #                     "4":    "Spring",
+    #                     "5":    "Spring",
+    #                     "6":    "Spring",
+    #                     "7":    "Summer",
+    #                     "8":    "Summer",
+    #                     "9":    "Summer",
+    #                     "10":   "Fall",
+    #                     "11":   "Fall",
+    #                     "12":   "Fall"
+    #                     }
 
-    # We have to map each season
-    data['Season'] = data.Season.map(Date_Dictionary)
-    test['Season'] = test.Season.map(Date_Dictionary)
+    # # We have to map each season
+    # data['Season'] = data.Season.map(Date_Dictionary)
+    # test['Season'] = test.Season.map(Date_Dictionary)
 
-    #Encode dummy variables for the seasons
-    season_dummies = pd.get_dummies(data['Season'], prefix = 'Season')
-    data = pd.concat([data, season_dummies], axis =1)
+    # #Encode dummy variables for the seasons
+    # season_dummies = pd.get_dummies(data['Season'], prefix = 'Season')
+    # data = pd.concat([data, season_dummies], axis =1)
 
-    season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
-    test = pd.concat([test, season_test_dummies], axis =1)
+    # season_test_dummies = pd.get_dummies(test['Season'], prefix = 'Season')
+    # test = pd.concat([test, season_test_dummies], axis =1)
 
     #Create column with years in integer before dropping the string version
     data['intYear'] = data.Year.astype(int)
@@ -265,27 +265,27 @@ def create_dates():
     #Want to feature seasons multiplied with years sold
     #Don't need this anymore
 
-    data['featuredDate'] = data['Season']
-    test['featuredDate'] = test['Season']
+    # data['featuredDate'] = data['Season']
+    # test['featuredDate'] = test['Season']
 
-    season_dict = {
-                    "Winter":   "1",
-                    "Spring":   "2",
-                    "Summer":   "3", 
-                    "Fall":     "4"
-                    }
+    # season_dict = {
+    #                 "Winter":   "1",
+    #                 "Spring":   "2",
+    #                 "Summer":   "3", 
+    #                 "Fall":     "4"
+    #                 }
 
-    #Map this onto the featuredData column
-    data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
-    test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
+    # #Map this onto the featuredData column
+    # data["featuredDate"] = data.featuredDate.map(season_dict).astype(int)
+    # test['featuredDate'] = test.featuredDate.map(season_dict).astype(int)
 
-    # Multiply intYear by featuredDate to get new category
-    data['featuredDate'] = data['featuredDate'] * data['intYear']
-    test['featuredDate'] = test['featuredDate'] * test['intYear'] 
+    # # Multiply intYear by featuredDate to get new category
+    # data['featuredDate'] = data['featuredDate'] * data['intYear']
+    # test['featuredDate'] = test['featuredDate'] * test['intYear'] 
     
     #We don't need seasons anymore
-    data.drop('Season', axis = 1, inplace = True)
-    test.drop('Season', axis = 1, inplace = True)
+    # data.drop('Season', axis = 1, inplace = True)
+    # test.drop('Season', axis = 1, inplace = True)
     
     status('All Dates')
 
@@ -311,21 +311,18 @@ def compute_score(clf, X, y,scoring='accuracy'):
     xval = cross_val_score(clf, X, y, cv = 5,scoring=scoring)
     return np.mean(xval)
 
-clf = ExtraTreesRegressor(n_estimators = 500)
-clf = clf.fit(data, targets)
+# clf = ExtraTreesRegressor(n_estimators = 500)
+# clf = clf.fit(data, targets)
 
-features = pd.DataFrame()
-features['feature'] = data.columns
-features['importance'] = clf.feature_importances_
 
-print features.sort_values(['importance'], ascending = False)
 
-model = SelectFromModel(clf, prefit = True)
-train_new = model.transform(data)
-train_new.shape
+# model = SelectFromModel(clf, prefit = True)
+# train_new = model.transform(data)
+# train_new.shape
 
-test_new = model.transform(test)
-test_new.shape
+# test_new = model.transform(test)
+# test_new.shape
+
 
 #Gradient Boosting 
 params = {
@@ -337,22 +334,26 @@ params = {
          }
 
 gradBoost = ensemble.GradientBoostingRegressor(**params)
-gradBoost.fit(train_new, targets)
-Y_grad_pred = gradBoost.predict(test_new)
+gradBoost.fit(data, targets)
+Y_grad_pred = gradBoost.predict(test)
+features = pd.DataFrame()
+features['feature'] = data.columns
+features['importance'] = gradBoost.feature_importances_
+print features.sort_values(['importance'], ascending = False)
 
 #Neural Network using Keras
 
 # create model
-model = Sequential()
-model.add(Dense(19, input_dim = 19, init = 'normal', activation = 'relu'))
-model.add(Dense(1, init = 'normal'))
-# Compile model
-model.compile(loss = 'mean_squared_error', optimizer = 'adam')
+# model = Sequential()
+# model.add(Dense(14, input_dim = 14, init = 'normal', activation = 'relu'))
+# model.add(Dense(1, init = 'normal'))
+# # Compile model
+# model.compile(loss = 'mean_squared_error', optimizer = 'adam')
 data_matrix = data.as_matrix()
 targets_matrix = targets.as_matrix()
 test_matrix = test.as_matrix()
-standard_hist = model.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
-standard_pred = model.predict(test_matrix)
+# standard_hist = model.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
+# standard_pred = model.predict(test_matrix)
 
 # fix random seed for reproducibility
 # seed = 7
@@ -372,14 +373,14 @@ standard_pred = model.predict(test_matrix)
 
 
 # create model
-model1 = Sequential()
-model1.add(Dense(19, input_dim=19, init='normal', activation='relu'))
-model1.add(Dense(6, init='normal', activation='relu'))
-model1.add(Dense(1, init='normal'))
-# Compile model
-model1.compile(loss='mean_squared_error', optimizer='adam')
-larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
-larger_pred = model1.predict(test_matrix)
+# model1 = Sequential()
+# model1.add(Dense(12, input_dim=12, init='normal', activation='relu'))
+# model1.add(Dense(7, init='normal', activation='relu'))
+# model1.add(Dense(1, init='normal'))
+# # Compile model
+# model1.compile(loss='mean_squared_error', optimizer='adam')
+# larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 5, nb_epoch = 200)
+# larger_pred = model1.predict(test_matrix)
 
 # np.random.seed(seed)
 # estimator = []
@@ -392,13 +393,13 @@ larger_pred = model1.predict(test_matrix)
 
 
 # create model
-model2 = Sequential()
-model2.add(Dense(26, input_dim = 19, init = 'normal', activation = 'relu'))
-model2.add(Dense(1, init = 'normal'))
-# Compile model
-model2.compile(loss = 'mean_squared_error', optimizer = 'adam')
-wider_hist = model2.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
-wider_pred = model2.predict(test_matrix)
+# model2 = Sequential()
+# model2.add(Dense(26, input_dim = 14, init = 'normal', activation = 'relu'))
+# model2.add(Dense(1, init = 'normal'))
+# # Compile model
+# model2.compile(loss = 'mean_squared_error', optimizer = 'adam')
+# wider_hist = model2.fit(data_matrix, targets_matrix, batch_size = 5, nb_epoch = 250)
+# wider_pred = model2.predict(test_matrix)
 
 # np.random.seed(seed)
 # estimators = []
@@ -413,9 +414,11 @@ wider_pred = model2.predict(test_matrix)
 
 #Linear Regression
 linReg = linear_model.LinearRegression()
-linReg.fit(train_new, targets)
-Y_lin_pred = linReg.predict(test_new)
-print linReg.score(train_new, targets)
+linReg.fit(data, targets)
+Y_lin_pred = linReg.predict(test)
+print linReg.score(data, targets)
+print('Coefficients: \n', linReg.coef_)
+
 
 #hyperparameters tuning
 
@@ -432,12 +435,12 @@ grid_search = GridSearchCV(forest,
                            param_grid = parameter_grid,
                            cv = 5)
 
-grid_search.fit(train_new, targets)
+grid_search.fit(data, targets)
 
 print('Best score: {}'.format(grid_search.best_score_))
 print('Best parameters: {}'.format(grid_search.best_params_))
 
-output = grid_search.predict(test_new).astype(int)
+output = grid_search.predict(test).astype(int)
 df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
@@ -447,12 +450,12 @@ df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Use
 #For Neural Networks
 
 #Standardized
-stand_out = standard_pred
-df_stand = pd.DataFrame()
-df_stand['Listing Price'] = origList_Price
-df_stand['Predicted Selling Price'] = stand_out
-df_stand['Address'] = orig_address
-df_stand[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/standPred.csv',index=False)
+# stand_out = standard_pred
+# df_stand = pd.DataFrame()
+# df_stand['Listing Price'] = origList_Price
+# df_stand['Predicted Selling Price'] = stand_out
+# df_stand['Address'] = orig_address
+# df_stand[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/standPred.csv',index=False)
 
 #Larger
 large_out = larger_pred
@@ -463,12 +466,12 @@ df_large['Address'] = orig_address
 df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/largePred.csv',index=False)
 
 #Wider
-wide_out = wider_pred
-df_wide = pd.DataFrame()
-df_wide['Listing Price'] = origList_Price
-df_wide['Predicted Selling Price'] = wide_out
-df_wide['Address'] = orig_address
-df_wide[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/widePred.csv',index=False)
+# wide_out = wider_pred
+# df_wide = pd.DataFrame()
+# df_wide['Listing Price'] = origList_Price
+# df_wide['Predicted Selling Price'] = wide_out
+# df_wide['Address'] = orig_address
+# df_wide[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/widePred.csv',index=False)
 
 #For Gradient Boosting 
 gradOut = Y_grad_pred
