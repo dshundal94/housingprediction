@@ -311,31 +311,17 @@ def compute_score(clf, X, y,scoring='accuracy'):
     xval = cross_val_score(clf, X, y, cv = 5,scoring=scoring)
     return np.mean(xval)
 
-def recover_train_test_target():
-    global data
-    global test
-    
-    train0 = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
-    
-    targets = train0['Selling Price']
-    train = data
-    
-    return train,test,targets
-
-
-train, test, targets = recover_train_test_target()
-
 clf = ExtraTreesRegressor(n_estimators = 500)
-clf = clf.fit(train, targets)
+clf = clf.fit(data, targets)
 
 features = pd.DataFrame()
-features['feature'] = train.columns
+features['feature'] = data.columns
 features['importance'] = clf.feature_importances_
 
 print features.sort_values(['importance'], ascending = False)
 
 model = SelectFromModel(clf, prefit = True)
-train_new = model.transform(train)
+train_new = model.transform(data)
 train_new.shape
 
 test_new = model.transform(test)
@@ -355,67 +341,73 @@ gradBoost.fit(train_new, targets)
 Y_grad_pred = gradBoost.predict(test_new)
 
 #Neural Network using Keras
-def baseline_model():
-    # create model
-    model = Sequential()
-    model.add(Dense(19, input_dim = 19, init = 'normal', activation = 'relu'))
-    model.add(Dense(1, init = 'normal'))
-    # Compile model
-    model.compile(loss = 'mean_squared_error', optimizer = 'adam')
-    return model
+
+# create model
+model = Sequential()
+model.add(Dense(19, input_dim = 19, init = 'normal', activation = 'relu'))
+model.add(Dense(1, init = 'normal'))
+# Compile model
+model.compile(loss = 'mean_squared_error', optimizer = 'adam')
+data_matrix = data.as_matrix()
+targets_matrix = targets.as_matrix()
+test_matrix = test.as_matrix()
+standard_hist = model.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
+standard_pred = model.predict(test_matrix)
 
 # fix random seed for reproducibility
-seed = 7
-np.random.seed(seed)
-# evaluate model with standardized dataset
-estimator = KerasRegressor(build_fn = baseline_model, nb_epoch = 100, batch_size = 5, verbose=0)
+# seed = 7
+# np.random.seed(seed)
+# # evaluate model with standardized dataset
+# estimator = KerasRegressor(build_fn = baseline_model, nb_epoch = 100, batch_size = 5, verbose=0)
 
 # evaluate model with standardized dataset
-np.random.seed(seed)
-estimators = []
-estimators.append(('standardize', StandardScaler()))
-estimators.append(('mlp', KerasRegressor(build_fn = baseline_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
-pipeline = Pipeline(estimators)
-# kfold = KFold(n_splits = 10, random_state = seed)
-results = cross_val_score(pipeline, train, targets, cv = 5)
-print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std()))
+# np.random.seed(seed)
+# estimators = []
+# estimators.append(('standardize', StandardScaler()))
+# estimators.append(('mlp', KerasRegressor(build_fn = baseline_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
+# pipeline = Pipeline(estimators)
+# # kfold = KFold(n_splits = 10, random_state = seed)
+# results = cross_val_score(pipeline, data, targets, cv = 5)
+# print("Standardized: %.2f (%.2f) MSE" % (results.mean(), results.std()))
 
-def larger_model():
-    # create model
-    model = Sequential()
-    model.add(Dense(19, input_dim=19, init='normal', activation='relu'))
-    model.add(Dense(6, init='normal', activation='relu'))
-    model.add(Dense(1, init='normal'))
-    # Compile model
-    model.compile(loss='mean_squared_error', optimizer='adam')
-    return model
 
-np.random.seed(seed)
-estimator = []
-estimator.append(('standardize', StandardScaler()))
-estimator.append(('mlp', KerasRegressor(build_fn = larger_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
-pipeline1 = Pipeline(estimator)
-# kfold1 = KFold(n_splits = 10, random_state = seed)
-results1 = cross_val_score(pipeline1, train, targets, cv = 5)
-print("Larger: %.2f (%.2f) MSE" % (results1.mean(), results1.std()))
+# create model
+model1 = Sequential()
+model1.add(Dense(19, input_dim=19, init='normal', activation='relu'))
+model1.add(Dense(6, init='normal', activation='relu'))
+model1.add(Dense(1, init='normal'))
+# Compile model
+model1.compile(loss='mean_squared_error', optimizer='adam')
+larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
+larger_pred = model1.predict(test_matrix)
 
-def wider_model():
-    # create model
-    model = Sequential()
-    model.add(Dense(26, input_dim = 19, init = 'normal', activation = 'relu'))
-    model.add(Dense(1, init = 'normal'))
-    # Compile model
-    model.compile(loss = 'mean_squared_error', optimizer = 'adam')
-    return model
+# np.random.seed(seed)
+# estimator = []
+# estimator.append(('standardize', StandardScaler()))
+# estimator.append(('mlp', KerasRegressor(build_fn = larger_model, nb_epoch = 50, batch_size = 5, verbose = 0)))
+# pipeline1 = Pipeline(estimator)
+# # kfold1 = KFold(n_splits = 10, random_state = seed)
+# results1 = cross_val_score(pipeline1, data, targets, cv = 5)
+# print("Larger: %.2f (%.2f) MSE" % (results1.mean(), results1.std()))
 
-np.random.seed(seed)
-estimators = []
-estimators.append(('standardize', StandardScaler()))
-estimators.append(('mlp', KerasRegressor(build_fn = wider_model, nb_epoch = 100, batch_size = 5, verbose = 0)))
-pipeline2 = Pipeline(estimators)
-# kfold2 = KFold(n_splits = 10, random_state = seed)
-results2 = cross_val_score(pipeline2, train, targets, cv = 5)
-print("Wider: %.2f (%.2f) MSE" % (results2.mean(), results2.std()))
+
+# create model
+model2 = Sequential()
+model2.add(Dense(26, input_dim = 19, init = 'normal', activation = 'relu'))
+model2.add(Dense(1, init = 'normal'))
+# Compile model
+model2.compile(loss = 'mean_squared_error', optimizer = 'adam')
+wider_hist = model2.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
+wider_pred = model2.predict(test_matrix)
+
+# np.random.seed(seed)
+# estimators = []
+# estimators.append(('standardize', StandardScaler()))
+# estimators.append(('mlp', KerasRegressor(build_fn = wider_model, nb_epoch = 100, batch_size = 5, verbose = 0)))
+# pipeline2 = Pipeline(estimators)
+# # kfold2 = KFold(n_splits = 10, random_state = seed)
+# results2 = cross_val_score(pipeline2, data, targets, cv = 5)
+# print("Wider: %.2f (%.2f) MSE" % (results2.mean(), results2.std()))
 
 
 
@@ -451,6 +443,32 @@ df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
 df_output['Address'] = orig_address
 df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/rfPred.csv',index=False)
+
+#For Neural Networks
+
+#Standardized
+stand_out = standard_pred
+df_stand = pd.DataFrame()
+df_stand['Listing Price'] = origList_Price
+df_stand['Predicted Selling Price'] = stand_out
+df_stand['Address'] = orig_address
+df_stand[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/standPred.csv',index=False)
+
+#Larger
+large_out = larger_pred
+df_large = pd.DataFrame()
+df_large['Listing Price'] = origList_Price
+df_large['Predicted Selling Price'] = large_out
+df_large['Address'] = orig_address
+df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/largePred.csv',index=False)
+
+#Wider
+wide_out = wider_pred
+df_wide = pd.DataFrame()
+df_wide['Listing Price'] = origList_Price
+df_wide['Predicted Selling Price'] = wide_out
+df_wide['Address'] = orig_address
+df_wide[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/widePred.csv',index=False)
 
 #For Gradient Boosting 
 gradOut = Y_grad_pred
