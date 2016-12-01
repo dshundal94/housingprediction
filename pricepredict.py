@@ -325,15 +325,7 @@ def recover_train_test_target():
 
 train, test, targets = recover_train_test_target()
 
-
-
-
-#computing test set deviance 
-# test_score = np.zeros((params['n_estimators'],), dtype = np.float64)
-# for i, y_pred in enumerate(cl.staged_predict(X_test)):
-#     test_score[i] = clf.loss_(y_test, y_pred)
-
-clf = ExtraTreesRegressor(n_estimators = 150)
+clf = ExtraTreesRegressor(n_estimators = 500)
 clf = clf.fit(train, targets)
 
 features = pd.DataFrame()
@@ -350,12 +342,18 @@ test_new = model.transform(test)
 test_new.shape
 
 #Gradient Boosting 
+params = {
+         'n_estimators': 500, 
+         'max_depth': 7, 
+         'min_samples_split': 2,
+         'learning_rate': 0.01,
+         'loss': 'ls'
+         }
 
-params = {'n_estimators': 500, 'max_depth': 4, 'min_samples_split': 2,
-          'learning_rate': 0.01, 'loss': 'ls'}
-cl = ensemble.GradientBoostingRegressor(**params)
-cl.fit(train_new, targets)
-Y_grad_pred = cl.predict(test_new)
+gradBoost = ensemble.GradientBoostingRegressor(**params)
+gradBoost.fit(train_new, targets)
+Y_grad_pred = gradBoost.predict(test_new)
+
 
 #Linear Regression
 linReg = linear_model.LinearRegression()
@@ -367,7 +365,7 @@ print linReg.score(train_new, targets)
 knn = KNeighborsRegressor()
 knn.fit(train_new, targets)
 KNeighborsRegressor(algorithm = 'auto', leaf_size = 30, metric = 'minkowski',
-           metric_params = None, n_jobs = 1, n_neighbors = 5, p = 2,
+           metric_params = None, n_jobs = 1, n_neighbors = 7, p = 2,
            weights =  'uniform')
 Y_prediction = knn.predict(test_new)
 print knn.score(train_new, targets)
@@ -378,8 +376,8 @@ print knn.score(train_new, targets)
 forest = RandomForestRegressor(max_features = 'auto')
 
 parameter_grid = {
-                 'max_depth' : [4,5,6,7,8],
-                 'n_estimators': [200,210,230,250,270,300]
+                 'max_depth' : [5,6,7],
+                 'n_estimators': [300,340,370,400]
                  }
 
 # cross_validation = StratifiedKFold(targets, n_folds = 5)
