@@ -124,11 +124,11 @@ def process_area():
     test.drop('Address', axis = 1, inplace = True)
 
     #encode dummy variables
-    # zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
-    # data = pd.concat([data, zipcode_dummies], axis = 1)
+    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
+    data = pd.concat([data, zipcode_dummies], axis = 1)
 
-    # zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
-    # test = pd.concat([test, zipcode_test_dummies], axis = 1)
+    zipcode_test_dummies = pd.get_dummies(test['Address - Zip Code'], prefix = 'Zip Code')
+    test = pd.concat([test, zipcode_test_dummies], axis = 1)
     #remove the zip code title
     data.drop('Address - Zip Code', axis = 1, inplace = True)
     test.drop('Address - Zip Code', axis = 1, inplace = True)
