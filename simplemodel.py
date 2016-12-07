@@ -22,6 +22,7 @@ from sklearn.grid_search import GridSearchCV
 from datetime import datetime
 from datetime import date
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn import ensemble
 from sklearn import linear_model
 from keras.models import Sequential
@@ -265,7 +266,7 @@ reg = fit_model(X_train, y_train)
 # Produce the value for 'max_depth'
 print "Parameter 'max_depth' is {} for the optimal model.".format(reg.get_params()['max_depth']) 
 
-output = reg.predict(predictions)   
+output = reg.predict(predictions).astype(int)
 df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
@@ -284,13 +285,12 @@ params = {
 
 gradBoost = ensemble.GradientBoostingRegressor(**params)
 gradBoost.fit(X_train, y_train)
-Y_grad_pred = gradBoost.predict(predictions)
 features = pd.DataFrame()
 features['feature'] = data.columns
-features['importance'] = gradBoost.feature_importances_
-print features.sort_values(['importance'], ascending = False)
+features['importance--gradBoost'] = gradBoost.feature_importances_
+
     
-Y_grad_pred = gradBoost.predict(predictions)
+Y_grad_pred = gradBoost.predict(predictions).astype(int)
 gradOut = Y_grad_pred
 df_grad = pd.DataFrame()
 df_grad['Listing Price'] = origList_Price
@@ -312,10 +312,30 @@ pl.show()
 results2 = sm.OLS(y_axis1,sm.add_constant(x_axis1)).fit()
 print results2.summary()
 
+#Using Adaboost regression
+
+ada = AdaBoostRegressor(n_estimators = 300)
+ada.fit(X_train, y_train)
+Y_ada_pred = ada.predict(predictions).astype(int)
+print ada.estimator_errors_
+print ada.score(X_train, y_train)
+features['importance--adaBoost'] = ada.feature_importances_
+print features.sort_values(['importance--gradBoost'], ascending = False)
+
+
+adaOut = Y_ada_pred
+df_ada = pd.DataFrame()
+df_ada['Listing Price'] = origList_Price
+df_ada['Predicted Selling Price'] = adaOut
+df_ada['Address'] = orig_address
+df_ada[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/adaBoostPredictions.csv',index=False)
+
+
+
 
 linReg = linear_model.LinearRegression()
 linReg.fit(X_train, y_train)
-Y_lin_pred = linReg.predict(predictions)
+Y_lin_pred = linReg.predict(predictions).astype(int)
 print linReg.score(X_train, y_train)
 print('Coefficients: \n', linReg.coef_)
 
@@ -338,8 +358,8 @@ model1.add(Dense(7, init='normal', activation='relu'))
 model1.add(Dense(1, init='normal'))
 # Compile model
 model1.compile(loss='mean_squared_error', optimizer='adam')
-larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
-larger_pred = model1.predict(test_matrix)
+larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 50)
+larger_pred = model1.predict(test_matrix).astype(int)
 
 large_out = larger_pred
 df_large = pd.DataFrame()
@@ -369,7 +389,7 @@ def fit_rf_model(X,y):
     return grid_search.best_estimator_
 
 rf_reg = fit_rf_model(X_train, y_train)
-output = rf_reg.predict(predictions)
+output = rf_reg.predict(predictions).astype(int)
 df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
