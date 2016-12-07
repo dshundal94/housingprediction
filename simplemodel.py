@@ -1,3 +1,13 @@
+#***This script creates a model to predict housing prices in Lodi, CA with
+# zipcodes 95240 and 95242. Gradient Boosted Algorithms works the best along with Random Forests. 
+# Linear Regression and Neural Networks work fine, but are not as good as the others. I can add more training data, by widening
+# the map including more zip codes This might give more accurate predictions. I am using 14 features to predict housing prices. 
+#
+#                                                                                                    
+#                                                                                                      **** --By Damanjit Hundal 
+
+
+
 import pandas as pd
 import csv as csv
 import numpy as np
@@ -39,7 +49,6 @@ pl.title('Training Data: Listing Price vs. Selling Price')
 m, b = np.polyfit(x_axis, y_axis, 1)
 plt.plot(x_axis, y_axis, '.')
 plt.plot(x_axis, m*x_axis + b, '-')
-pl.legend()
 pl.xlabel('Listing Price')
 pl.ylabel('Selling Price')
 pl.show()
@@ -261,7 +270,7 @@ df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
 df_output['Address'] = orig_address
-df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newPredictions.csv',index=False)
+df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/decisionTreePredictions.csv',index=False)
 
 
 #Gradient Boosting 
@@ -287,7 +296,7 @@ df_grad = pd.DataFrame()
 df_grad['Listing Price'] = origList_Price
 df_grad['Predicted Selling Price'] = gradOut
 df_grad['Address'] = orig_address
-df_grad[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newgradPred.csv',index=False)
+df_grad[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/gradientBoostedPredictions.csv',index=False)
 
 #Plot to see if the predicted selling price is linear with the listing price as it was with training data
 x_axis1 = origList_Price
@@ -297,7 +306,6 @@ pl.title('Listing Price vs. Predicted Selling Price')
 m, b = np.polyfit(x_axis1, y_axis1, 1)
 plt.plot(x_axis1, y_axis1, '.')
 plt.plot(x_axis1, m*x_axis1 + b, '-')
-pl.legend()
 pl.xlabel('Listing Price')
 pl.ylabel('Predicted Selling Price')
 pl.show()
@@ -316,7 +324,7 @@ dfx_output = pd.DataFrame()
 dfx_output['Listing Price'] = origList_Price
 dfx_output['Predicted Selling Price'] = linOut
 dfx_output['Address'] = orig_address
-dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newlinRegPred.csv',index=False)
+dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/linRegPredictions.csv',index=False)
 
 #Neural Network
 
@@ -338,24 +346,8 @@ df_large = pd.DataFrame()
 df_large['Listing Price'] = origList_Price
 df_large['Predicted Selling Price'] = large_out
 df_large['Address'] = orig_address
-df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newlargePred.csv',index=False)
+df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/neuralNetworksPrediction.csv',index=False)
 
-x_axis3 = origList_Price
-y_axis3 = large_out
-pl.figure()
-pl.title('Listing Price vs. Predicted Selling Price')
-pl.xlim(0, 1200000)
-pl.ylim(0, 1200000)
-pl.gca().set_aspect('equal', adjustable='box')
-m, b = np.polyfit(x_axis3, y_axis3, 1)
-plt.plot(x_axis3, y_axis3, '.')
-plt.plot(x_axis3, m*x_axis3 + b, '-')
-pl.legend()
-pl.xlabel('Listing Price')
-pl.ylabel('Predicted Selling Price')
-pl.show()
-results3 = sm.OLS(y_axis3,sm.add_constant(x_axis3)).fit()
-print results3.summary()
 
 def fit_rf_model(X,y):
     cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
@@ -382,4 +374,4 @@ df_output = pd.DataFrame()
 df_output['Listing Price'] = origList_Price
 df_output['Predicted Selling Price'] = output
 df_output['Address'] = orig_address
-df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newrfPred.csv',index=False)
+df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/randomForestPredictions.csv',index=False)
