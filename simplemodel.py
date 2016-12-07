@@ -289,6 +289,22 @@ df_grad['Predicted Selling Price'] = gradOut
 df_grad['Address'] = orig_address
 df_grad[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newgradPred.csv',index=False)
 
+#Plot to see if the predicted selling price is linear with the listing price as it was with training data
+x_axis1 = origList_Price
+y_axis1 = gradOut
+pl.figure()
+pl.title('Listing Price vs. Predicted Selling Price')
+m, b = np.polyfit(x_axis1, y_axis1, 1)
+plt.plot(x_axis1, y_axis1, '.')
+plt.plot(x_axis1, m*x_axis1 + b, '-')
+pl.legend()
+pl.xlabel('Listing Price')
+pl.ylabel('Predicted Selling Price')
+pl.show()
+results2 = sm.OLS(y_axis1,sm.add_constant(x_axis1)).fit()
+print results2.summary()
+
+
 linReg = linear_model.LinearRegression()
 linReg.fit(X_train, y_train)
 Y_lin_pred = linReg.predict(predictions)
@@ -323,6 +339,23 @@ df_large['Listing Price'] = origList_Price
 df_large['Predicted Selling Price'] = large_out
 df_large['Address'] = orig_address
 df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/newlargePred.csv',index=False)
+
+x_axis3 = origList_Price
+y_axis3 = large_out
+pl.figure()
+pl.title('Listing Price vs. Predicted Selling Price')
+pl.xlim(0, 1200000)
+pl.ylim(0, 1200000)
+pl.gca().set_aspect('equal', adjustable='box')
+m, b = np.polyfit(x_axis3, y_axis3, 1)
+plt.plot(x_axis3, y_axis3, '.')
+plt.plot(x_axis3, m*x_axis3 + b, '-')
+pl.legend()
+pl.xlabel('Listing Price')
+pl.ylabel('Predicted Selling Price')
+pl.show()
+results3 = sm.OLS(y_axis3,sm.add_constant(x_axis3)).fit()
+print results3.summary()
 
 def fit_rf_model(X,y):
     cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
