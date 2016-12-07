@@ -110,12 +110,18 @@ def process_lotsize():
     
 
     def fillLotSize(row):
-        if row['Address - Zip Code'] == '95240':
-            return 5756
-        elif row['Address - Zip Code'] == '95242':
+        if row['Address - Zip Code'] == 95240:
+            return 5663
+        elif row['Address - Zip Code'] == 95242:
             return 6456
+        elif row['Address - Zip Code'] == 95209:
+            return 6098
+        elif row['Address - Zip Code'] == 95219:
+            return 6928    
     data['Lot Size - Sq Ft'] = data.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    data['Lot Size - Sq Ft'] = data.apply(lambda r: fillLotSize(r) if r['Lot Size - Sq Ft'] == 0 else r['Lot Size - Sq Ft'], axis = 1)
     predictions['Lot Size - Sq Ft'] = predictions.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
+    predictions['Lot Size - Sq Ft'] = predictions.apply(lambda r: fillLotSize(r) if r['Lot Size - Sq Ft'] == 0 else r['Lot Size - Sq Ft'], axis = 1)
     status('Lot Size - Sq Ft')
 process_lotsize()
 
@@ -129,6 +135,10 @@ def process_yearBuilt():
             return 1963
         elif row['Address - Zip Code'] == 95242:
             return 1985
+        elif row['Address - Zip Code'] == 95209:
+            return 2002
+        elif row['Address - Zip Code'] == 95219:
+            return 2005
     data['Year Built'] = data.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     predictions['Year Built'] = predictions.apply(lambda r: fillYearBuilt(r) if np.isnan(r['Year Built']) else r['Year Built'], axis = 1)
     status('Year Built')
@@ -227,6 +237,9 @@ def get_marketDate():
 
 get_marketDate()
 
+data.info()
+predictions.info()
+
 
 features = data.drop('Selling Price', axis = 1, inplace = True)
 
@@ -276,8 +289,8 @@ df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Use
 
 #Gradient Boosting 
 params = {
-         'n_estimators': 500, 
-         'max_depth': 7, 
+         'n_estimators': 800, 
+         'max_depth': 9, 
          'min_samples_split': 2,
          'learning_rate': 0.01,
          'loss': 'ls'
@@ -314,7 +327,7 @@ print results2.summary()
 
 #Using Adaboost regression
 
-ada = AdaBoostRegressor(n_estimators = 300)
+ada = AdaBoostRegressor(n_estimators = 5000)
 ada.fit(X_train, y_train)
 Y_ada_pred = ada.predict(predictions).astype(int)
 print ada.estimator_errors_
@@ -332,12 +345,11 @@ df_ada[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/
 
 
 
-
+#Linear Regression
 linReg = linear_model.LinearRegression()
 linReg.fit(X_train, y_train)
 Y_lin_pred = linReg.predict(predictions).astype(int)
 print linReg.score(X_train, y_train)
-print('Coefficients: \n', linReg.coef_)
 
 linOut = Y_lin_pred
 dfx_output = pd.DataFrame()
@@ -348,17 +360,18 @@ dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Us
 
 #Neural Network
 
+#Need to convert into numpy sequence
 data_matrix = X_train.as_matrix()
 targets_matrix = y_train.as_matrix()
 test_matrix = predictions.as_matrix()
 
 model1 = Sequential()
-model1.add(Dense(14, input_dim=14, init='normal', activation='relu'))
-model1.add(Dense(7, init='normal', activation='relu'))
+model1.add(Dense(16, input_dim=16, init='normal', activation='relu'))
+model1.add(Dense(9, init='normal', activation='relu'))
 model1.add(Dense(1, init='normal'))
 # Compile model
 model1.compile(loss='mean_squared_error', optimizer='adam')
-larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 50)
+larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
 larger_pred = model1.predict(test_matrix).astype(int)
 
 large_out = larger_pred
@@ -375,7 +388,7 @@ def fit_rf_model(X,y):
 
     params = {
                      'max_depth' : [7],
-                     'n_estimators': [350]
+                     'n_estimators': [500]
                      }
 
     scoring_fnc = make_scorer(performance_metric)
