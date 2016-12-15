@@ -36,6 +36,8 @@ import matplotlib.pyplot as plt
 from matplotlib import transforms
 import statsmodels.api as sm
 import statsmodels.formula.api as smf
+from sklearn.cross_validation import cross_val_score
+
 
 
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
@@ -292,7 +294,7 @@ params = {
          'n_estimators': 800, 
          'max_depth': 9, 
          'min_samples_split': 2,
-         'learning_rate': 0.01,
+         'learning_rate': 0.003,
          'loss': 'ls'
          }
 
@@ -327,7 +329,7 @@ print results2.summary()
 
 #Using Adaboost regression
 
-ada = AdaBoostRegressor(n_estimators = 5000)
+ada = AdaBoostRegressor(n_estimators = 1000)
 ada.fit(X_train, y_train)
 Y_ada_pred = ada.predict(predictions).astype(int)
 print ada.estimator_errors_
@@ -361,17 +363,60 @@ dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Us
 #Neural Network
 
 #Need to convert into numpy sequence
+#Create baseline model to compare other neural network to measure loss
+
+
 data_matrix = X_train.as_matrix()
 targets_matrix = y_train.as_matrix()
 test_matrix = predictions.as_matrix()
 
+# def baseline_model(optimizer = 'rmsprop', init = 'normal'):
+#     model = Sequential()
+#     model.add(Dense(20, input_dim = 16, init = 'normal', activation = 'relu'))
+#     model.add(Dense(7, init = init, activation = 'relu'))
+#     model.add(Dense(1, init = init))
+#     # Compile model
+#     model.compile(loss = 'mean_squared_error', optimizer = 'adam')
+#     # standard_hist = model.fit(data_matrix, targets_matrix, batch_size = 50, nb_epoch = 5)
+#     # standard_pred = model.predict(test_matrix)
+#     return model
+
+# #fix random seed for reproducibility
+# seed = 7
+# np.random.seed(seed)
+# # evaluate model with standardized dataset
+# model = KerasRegressor(build_fn = baseline_model, verbose=0)
+
+# #evaluate model with standardized dataset
+# np.random.seed(seed)
+# optimizers = ['rmsprop', 'adam']
+# init = ['glorot_uniform', 'normal']
+# epochs = np.array([50, 100])
+# batches = np.array([5, 10])
+# param_grid_neural = dict(optimizer = optimizers, nb_epoch = epochs, batch_size = batches, init = init)
+# grid_neural = GridSearchCV(estimator = model, param_grid = param_grid_neural)
+# grid_result_neural = grid_neural.fit(data_matrix, targets_matrix)
+# # standard_pred = grid_result_neural.predict(predictions)
+# # summarize result
+# print("Best: %f using %s" % (grid_result_neural.best_score_, grid_result_neural.best_params_))
+# for params, mean_score, scores in grid_result_neural.grid_scores_:
+#     print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))
+
+# #Standardized
+# stand_out = standard_pred
+# df_stand = pd.DataFrame()
+# df_stand['Listing Price'] = origList_Price
+# df_stand['Predicted Selling Price'] = stand_out
+# df_stand['Address'] = orig_address
+# df_stand[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/standardNeuralPred.csv',index=False)
+
 model1 = Sequential()
-model1.add(Dense(16, input_dim=16, init='normal', activation='relu'))
-model1.add(Dense(9, init='normal', activation='relu'))
+model1.add(Dense(16, input_dim= 16, init='normal', activation='relu'))
+model1.add(Dense(7, init='normal', activation='relu'))
 model1.add(Dense(1, init='normal'))
 # Compile model
 model1.compile(loss='mean_squared_error', optimizer='adam')
-larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 10, nb_epoch = 100)
+larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 5, nb_epoch = 50)
 larger_pred = model1.predict(test_matrix).astype(int)
 
 large_out = larger_pred
