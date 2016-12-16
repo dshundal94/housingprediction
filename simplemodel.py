@@ -1,79 +1,40 @@
-#***This script creates a model to predict housing prices in Lodi, CA with
-# zipcodes 95240 and 95242. Gradient Boosted Algorithms works the best along with Random Forests. 
-# Linear Regression and Neural Networks work fine, but are not as good as the others. I can add more training data, by widening
-# the map including more zip codes This might give more accurate predictions. I am using 14 features to predict housing prices. 
-#
-#                                                                                                    
-#                                                                                                      **** --By Damanjit Hundal 
-
+# ****This is a script that predicts housing prices in the Lodi area with zip codes 
+# ****95240,95242,95209,and 95219 so far. The XGBoost algorithm is used, as it was 
+# ****found that it does it a good job of minimizing the mean squared error in the 
+# ****cross validation set. I will try to expand the dataset by including more zip
+# ****codes in the future. The data is first cleaned and prepared and then fed into
+# ****the XGBoost algorithm. The target variable is continuous so regression is used.
+# ****Currently, there are 13 features, with hopes of including more features in the 
+# ****in the future. 
 
 
 import pandas as pd
 import csv as csv
 import numpy as np
-from sklearn.cross_validation import ShuffleSplit
-from sklearn.metrics import r2_score
-from sklearn.cross_validation import train_test_split
-import pylab as pl
-from sklearn import datasets
-from sklearn.tree import DecisionTreeRegressor
-from sklearn.metrics import make_scorer
-from sklearn.grid_search import GridSearchCV
+import matplotlib.pyplot as pl
 from datetime import datetime
 from datetime import date
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.ensemble import AdaBoostRegressor
+from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import r2_score
 from sklearn import ensemble
-from sklearn import linear_model
-from keras.models import Sequential
-from keras.layers import Dense
-from keras.wrappers.scikit_learn import KerasRegressor
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import StandardScaler
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-from matplotlib import transforms
-import statsmodels.api as sm
-import statsmodels.formula.api as smf
-from sklearn.cross_validation import cross_val_score
-
-
+from sklearn import model_selection, metrics
+import sys
+sys.path.append("C:/Users/Damanjit/Documents/xgboost_code/xgboost/wrapper")
+import xgboost as xgb
+from xgboost.sklearn import XGBRegressor
 
 data = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/sold3.csv')
-prices = data['Selling Price']
 predictions = pd.read_csv('C:/Users/Damanjit/Documents/HousingPrediction/testing3.csv')
 
-#Plot to see relationship between the listed price and the final sale price
-x_axis = data['Listing Price']
-y_axis = data['Selling Price']
-pl.figure()
-pl.title('Training Data: Listing Price vs. Selling Price')
-m, b = np.polyfit(x_axis, y_axis, 1)
-plt.plot(x_axis, y_axis, '.')
-plt.plot(x_axis, m*x_axis + b, '-')
-pl.xlabel('Listing Price')
-pl.ylabel('Selling Price')
-pl.show()
-results = sm.OLS(y_axis,sm.add_constant(x_axis)).fit()
-print results.summary()
-print "y=%.6fx+(%.6f)"%(m,b)
-
+prices = data['Selling Price']
 predictions.drop('Selling Price', axis = 1, inplace = True)
 predictions.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
+data.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 origList_Price = predictions['Listing Price']
 orig_address = predictions['Address']
 
-def performance_metric(y_true, y_predict):
-    # Calculates and returns the performance score between 
-    # true and predicted values based on the metric chosen.
-    
-    score = r2_score(y_true, y_predict)
-    
-    # Return the score
-    return score
-data.drop('Selling_Price_Per_Sqft', axis = 1, inplace = True)
 
+#This shows when a part of the code is processed
 def status(feature):
 
     print 'Processing',feature,': ok'
@@ -87,7 +48,7 @@ def get_pool():
                 }
     data['Pool'] = data.Pool.map(Pool_dict).astype(int)
     predictions['Pool'] = predictions.Pool.map(Pool_dict).astype(int)
-
+    status('Pool')
 get_pool()
 
 #Combine Half bathroom with full bathrooms
@@ -98,16 +59,10 @@ def get_bath():
     predictions['Bathrooms - Half'] = predictions['Bathrooms - Half'] / 2
     predictions['Total Bathrooms'] = predictions['Bathrooms - Full'] + predictions['Bathrooms - Half']
 
-    #Drop Half and Full bathrooms, because feature redundant
-    data.drop('Bathrooms - Full', axis = 1, inplace = True)
-    data.drop('Bathrooms - Half', axis = 1, inplace = True)
-
-    predictions.drop('Bathrooms - Full', axis = 1, inplace = True)
-    predictions.drop('Bathrooms - Half', axis = 1, inplace = True)
 
 get_bath()
 
-#Hardcoding the lot size based off median of zipcode. will generalize later to include all zip codes. 
+#Filling empty lot sizes based off median of zipcode. will generalize later to include all zip codes. 
 def process_lotsize():
     
 
@@ -125,11 +80,9 @@ def process_lotsize():
     predictions['Lot Size - Sq Ft'] = predictions.apply(lambda r: fillLotSize(r) if np.isnan(r['Lot Size - Sq Ft']) else r['Lot Size - Sq Ft'], axis = 1)
     predictions['Lot Size - Sq Ft'] = predictions.apply(lambda r: fillLotSize(r) if r['Lot Size - Sq Ft'] == 0 else r['Lot Size - Sq Ft'], axis = 1)
     status('Lot Size - Sq Ft')
-process_lotsize()
+process_lotsize()    
 
-
-
-#Harcode the year built, will generalize for all zip codes later
+#Filling the year built, will generalize for all zip codes later
 def process_yearBuilt():
 
     def fillYearBuilt(row):
@@ -147,36 +100,17 @@ def process_yearBuilt():
 
 process_yearBuilt()
 
-#Use binary option to show zipcodes
-def process_area():
-    global data
-    global predictions
-
-    #Clean the address variable
-    data.drop('Address', axis = 1, inplace = True)
-    predictions.drop('Address', axis = 1, inplace = True)
-
-    # #encode dummy variables
-    zipcode_dummies = pd.get_dummies(data['Address - Zip Code'], prefix = 'Zip Code')
-    data = pd.concat([data, zipcode_dummies], axis = 1)
-
-    zipcode_test_dummies = pd.get_dummies(predictions['Address - Zip Code'], prefix = 'Zip Code')
-    predictions = pd.concat([predictions, zipcode_test_dummies], axis = 1)
-    
-    #remove the zip code title
-    data.drop('Address - Zip Code', axis = 1, inplace = True)
-    predictions.drop('Address - Zip Code', axis = 1, inplace = True) 
-    status('Zip Code')
-
-process_area()
-
 #Drop variables we don't need
 def drop_strings():
 
     data.drop('Selling Date', axis = 1, inplace = True)
+    data.drop('Address', axis = 1, inplace = True)
 
+    predictions.drop('Address', axis = 1, inplace = True)
     predictions.drop('Pending Date', axis = 1, inplace = True)
     predictions.drop('Selling Date', axis = 1, inplace = True)
+
+    status('Dropped Strings')
 
 drop_strings()
 
@@ -212,7 +146,6 @@ def process_dates():
 
 process_dates()
 
-
 #Need to work on creating days on market column for test data
 def get_marketDate():
 
@@ -239,217 +172,64 @@ def get_marketDate():
 
 get_marketDate()
 
-data.info()
-predictions.info()
-
-
 features = data.drop('Selling Price', axis = 1, inplace = True)
 
 X = data
 y = prices
-# Shuffle and split the data into training and testing subsets
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20, train_size=0.80, random_state=50)
 
-def fit_model(X, y):
-    # """ Performs grid search over the 'max_depth' parameter for a 
-    #     decision tree regressor trained on the input data [X, y]. """
+#create a model to evaluate how well the XGBoost algorithm is performing
+def modelfitXGB(alg, X, y, useTrainCV = True, cv_folds = 5, early_stopping_rounds = 50):
     
-    # Create cross-validation sets from the training data
-    cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
+    if useTrainCV:
+        xgb_param = alg.get_xgb_params()
+        xgtrain = xgb.DMatrix(X, label = y)
+        cvresult = xgb.cv(xgb_param, xgtrain, num_boost_round = alg.get_params()['n_estimators'], nfold = cv_folds,
+            metrics = 'rmse', early_stopping_rounds = early_stopping_rounds, verbose_eval = 136)
+        alg.set_params(n_estimators = cvresult.shape[0])
+        cv_score = model_selection.cross_val_score(alg, X, y, cv = cv_folds)
+        print "CV Score : Mean - %.7g | Std - %.7g | Min - %.7g | Max - %.7g" % (np.mean(cv_score), np.std(cv_score), np.min(cv_score), np.max(cv_score))
 
-    #Create a decision tree regressor object
-    regressor = DecisionTreeRegressor()
+    #Fit the algorithm on the data
+    alg.fit(X, y, eval_metric = 'rmse')
+        
+    #Predict training set:
+    train_predictions = alg.predict(X)
+        
+    #Print model report:
+    print "\nModel Report"
+    print "Mean Squared Error : %.4g" % metrics.mean_squared_error(y, train_predictions)
+    print "r2 Score: %f" % metrics.r2_score(y, train_predictions)
+                    
+    feat_imp = pd.Series(alg.booster().get_fscore()).sort_values(ascending = False)
+    feat_imp.plot(kind = 'bar', title = 'Feature Importances')
+    pl.ylabel('Feature Importance Score')
+    pl.show()
 
-    #Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
-    params = {"max_depth":range(1,10)}
+xgb1 = XGBRegressor(
+ learning_rate = 0.01,
+ n_estimators = 1500,
+ max_depth = 3,
+ min_child_weight = 2,
+ gamma = 0,
+ subsample = 0.75,
+ colsample_bytree = 0.85,
+ reg_alpha = 1.33,
+ reg_lambda = 2.33,
+ objective = 'reg:linear',
+ nthread = 4,
+ scale_pos_weight = 1,
+ seed = 10)
 
-    #Transform 'performance_metric' into a scoring function using 'make_scorer' 
-    scoring_fnc = make_scorer(performance_metric)
+modelfitXGB(xgb1, X, y)
 
-    #Create the grid search object
-    grid = GridSearchCV(regressor, params, scoring_fnc, cv=cv_sets)
-
-    # Fit the grid search object to the data to compute the optimal model
-    grid = grid.fit(X, y)
-
-    # Return the optimal model after fitting the data
-    return grid.best_estimator_
-
-# Fit the training data to the model using grid search
-reg = fit_model(X_train, y_train)
-
-# Produce the value for 'max_depth'
-print "Parameter 'max_depth' is {} for the optimal model.".format(reg.get_params()['max_depth']) 
-
-output = reg.predict(predictions).astype(int)
-df_output = pd.DataFrame()
-df_output['Listing Price'] = origList_Price
-df_output['Predicted Selling Price'] = output
-df_output['Address'] = orig_address
-df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/decisionTreePredictions.csv',index=False)
-
-
-#Gradient Boosting 
-params = {
-         'n_estimators': 800, 
-         'max_depth': 9, 
-         'min_samples_split': 2,
-         'learning_rate': 0.003,
-         'loss': 'ls'
-         }
-
-gradBoost = ensemble.GradientBoostingRegressor(**params)
-gradBoost.fit(X_train, y_train)
-features = pd.DataFrame()
-features['feature'] = data.columns
-features['importance--gradBoost'] = gradBoost.feature_importances_
-
-    
-Y_grad_pred = gradBoost.predict(predictions).astype(int)
-gradOut = Y_grad_pred
-df_grad = pd.DataFrame()
-df_grad['Listing Price'] = origList_Price
-df_grad['Predicted Selling Price'] = gradOut
-df_grad['Address'] = orig_address
-df_grad[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/gradientBoostedPredictions.csv',index=False)
-
-#Plot to see if the predicted selling price is linear with the listing price as it was with training data
-x_axis1 = origList_Price
-y_axis1 = gradOut
-pl.figure()
-pl.title('Listing Price vs. Predicted Selling Price')
-m, b = np.polyfit(x_axis1, y_axis1, 1)
-plt.plot(x_axis1, y_axis1, '.')
-plt.plot(x_axis1, m*x_axis1 + b, '-')
-pl.xlabel('Listing Price')
-pl.ylabel('Predicted Selling Price')
-pl.show()
-results2 = sm.OLS(y_axis1,sm.add_constant(x_axis1)).fit()
-print results2.summary()
-
-#Using Adaboost regression
-
-ada = AdaBoostRegressor(n_estimators = 1000)
-ada.fit(X_train, y_train)
-Y_ada_pred = ada.predict(predictions).astype(int)
-print ada.estimator_errors_
-print ada.score(X_train, y_train)
-features['importance--adaBoost'] = ada.feature_importances_
-print features.sort_values(['importance--gradBoost'], ascending = False)
+#After viewing the CV score for the model, output predictions to a CSV file for viewing. 
+xgb1.fit(X,y)
+Y_xgb_pred = xgb1.predict(predictions).astype(int)
+xgbOut = Y_xgb_pred
+df_xgb = pd.DataFrame()
+df_xgb['Listing Price'] = origList_Price
+df_xgb['Predicted Selling Price'] = xgbOut
+df_xgb['Address'] = orig_address
+df_xgb[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/XGBoostPredictions.csv',index=False)
 
 
-adaOut = Y_ada_pred
-df_ada = pd.DataFrame()
-df_ada['Listing Price'] = origList_Price
-df_ada['Predicted Selling Price'] = adaOut
-df_ada['Address'] = orig_address
-df_ada[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/adaBoostPredictions.csv',index=False)
-
-
-
-#Linear Regression
-linReg = linear_model.LinearRegression()
-linReg.fit(X_train, y_train)
-Y_lin_pred = linReg.predict(predictions).astype(int)
-print linReg.score(X_train, y_train)
-
-linOut = Y_lin_pred
-dfx_output = pd.DataFrame()
-dfx_output['Listing Price'] = origList_Price
-dfx_output['Predicted Selling Price'] = linOut
-dfx_output['Address'] = orig_address
-dfx_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/linRegPredictions.csv',index=False)
-
-#Neural Network
-
-#Need to convert into numpy sequence
-#Create baseline model to compare other neural network to measure loss
-
-
-data_matrix = X_train.as_matrix()
-targets_matrix = y_train.as_matrix()
-test_matrix = predictions.as_matrix()
-
-# def baseline_model(optimizer = 'rmsprop', init = 'normal'):
-#     model = Sequential()
-#     model.add(Dense(20, input_dim = 16, init = 'normal', activation = 'relu'))
-#     model.add(Dense(7, init = init, activation = 'relu'))
-#     model.add(Dense(1, init = init))
-#     # Compile model
-#     model.compile(loss = 'mean_squared_error', optimizer = 'adam')
-#     # standard_hist = model.fit(data_matrix, targets_matrix, batch_size = 50, nb_epoch = 5)
-#     # standard_pred = model.predict(test_matrix)
-#     return model
-
-# #fix random seed for reproducibility
-# seed = 7
-# np.random.seed(seed)
-# # evaluate model with standardized dataset
-# model = KerasRegressor(build_fn = baseline_model, verbose=0)
-
-# #evaluate model with standardized dataset
-# np.random.seed(seed)
-# optimizers = ['rmsprop', 'adam']
-# init = ['glorot_uniform', 'normal']
-# epochs = np.array([50, 100])
-# batches = np.array([5, 10])
-# param_grid_neural = dict(optimizer = optimizers, nb_epoch = epochs, batch_size = batches, init = init)
-# grid_neural = GridSearchCV(estimator = model, param_grid = param_grid_neural)
-# grid_result_neural = grid_neural.fit(data_matrix, targets_matrix)
-# # standard_pred = grid_result_neural.predict(predictions)
-# # summarize result
-# print("Best: %f using %s" % (grid_result_neural.best_score_, grid_result_neural.best_params_))
-# for params, mean_score, scores in grid_result_neural.grid_scores_:
-#     print("%f (%f) with: %r" % (scores.mean(), scores.std(), params))
-
-# #Standardized
-# stand_out = standard_pred
-# df_stand = pd.DataFrame()
-# df_stand['Listing Price'] = origList_Price
-# df_stand['Predicted Selling Price'] = stand_out
-# df_stand['Address'] = orig_address
-# df_stand[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/standardNeuralPred.csv',index=False)
-
-model1 = Sequential()
-model1.add(Dense(16, input_dim= 16, init='normal', activation='relu'))
-model1.add(Dense(7, init='normal', activation='relu'))
-model1.add(Dense(1, init='normal'))
-# Compile model
-model1.compile(loss='mean_squared_error', optimizer='adam')
-larger_hist = model1.fit(data_matrix, targets_matrix, batch_size = 5, nb_epoch = 50)
-larger_pred = model1.predict(test_matrix).astype(int)
-
-large_out = larger_pred
-df_large = pd.DataFrame()
-df_large['Listing Price'] = origList_Price
-df_large['Predicted Selling Price'] = large_out
-df_large['Address'] = orig_address
-df_large[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/neuralNetworksPrediction.csv',index=False)
-
-
-def fit_rf_model(X,y):
-    cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
-    forest = RandomForestRegressor(max_features = 'auto')
-
-    params = {
-                     'max_depth' : [7],
-                     'n_estimators': [500]
-                     }
-
-    scoring_fnc = make_scorer(performance_metric)
-
-    grid_search = GridSearchCV(forest, params, scoring_fnc, cv = cv_sets)
-
-    grid_search.fit(X, y)
-
-    print('Best score: {}'.format(grid_search.best_score_))
-    print('Best parameters: {}'.format(grid_search.best_params_))
-    return grid_search.best_estimator_
-
-rf_reg = fit_rf_model(X_train, y_train)
-output = rf_reg.predict(predictions).astype(int)
-df_output = pd.DataFrame()
-df_output['Listing Price'] = origList_Price
-df_output['Predicted Selling Price'] = output
-df_output['Address'] = orig_address
-df_output[['Address', 'Listing Price','Predicted Selling Price']].to_csv('C:/Users/Damanjit/Documents/HousingPrediction/randomForestPredictions.csv',index=False)

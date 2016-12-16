@@ -12,7 +12,7 @@ Address,Listing Price,Predicted Selling Price
 "2069 Incline, Lodi, CA 95242",528000,506792
 "2570 Legacy Way, Lodi, CA 95242-4821",515000,493556
 "2351 Saint Anton Dr, Lodi, CA 95242-9100",699000,657591
-"2530 Legacy Way, Lodi, CA 95242",512900,494757
+"2530 Legacy Way, Lodi, CA 95242",512900,494210
 "303 Rainier Dr, Lodi, CA 95242-2627",335000,330126
 "1833 W Kettleman Ln, Lodi, CA 95242-4216",1150000,764714
 "1363 Lakeshore Dr, Lodi, CA 95242-3937",575000,564563
@@ -33,7 +33,7 @@ Address,Listing Price,Predicted Selling Price
 "1463 S Mills Ave, Lodi, CA 95242-4265",354900,347322
 "1641 Cimmaron Dr, Lodi, CA 95242-4744",419000,405806
 "955 Virginia Ave, Lodi, CA 95242-3583",439950,421414
-"1701 Normandy Ln, Lodi, CA 95242",399950,391907
+"1701 Normandy Ln, Lodi, CA 95242",399950,391360
 "818 Cheney Ct, Lodi, CA 95242-3507",664999,627415
 "701 W Tokay St, Lodi, CA 95240-3925",420000,408324
 "1621 Millbrook Dr, Lodi, CA 95242-4794",525000,505295
@@ -70,10 +70,10 @@ Address,Listing Price,Predicted Selling Price
 "1619 S Church St, Lodi, CA 95240-6205",249500,244792
 "910 York St, Lodi, CA 95240-5103",274900,269824
 "1235 S Pleasant Ave, Lodi, CA 95240-5725",250000,245221
-"1209 S Fairmont Ave, Lodi, CA 95240-5518",289000,281478
-"20 S Ham Ln, Lodi, CA 95242-3001",299000,293288
+"1209 S Fairmont Ave, Lodi, CA 95240-5518",289000,281354
+"20 S Ham Ln, Lodi, CA 95242-3001",299000,293164
 "741 S Church St, Lodi, CA 95240-4726",439000,422705
-"616 Alicante Dr, Lodi, CA 95240-5607",219950,215483
+"616 Alicante Dr, Lodi, CA 95240-5607",219950,215246
 "621 S Sacramento St, Lodi, CA 95240",169000,157134
 "325 E Harney Ln, Lodi, CA 95240-6839",280000,274593
 "311 E Harney Ln, Lodi, CA 95240-6839",320000,263028
@@ -89,7 +89,7 @@ Address,Listing Price,Predicted Selling Price
 "1431 S Sacramento St, Lodi, CA 95240-6221",224000,219264
 "1035 S Central Ave, Lodi, CA 95240",228000,224567
 "437 Eden St, Lodi, CA 95240",169900,166973
-"1300 S school, Lodi, CA 95240",249999,245534
+"1300 S school, Lodi, CA 95240",249999,245376
 "2514 Mercato Ln, Lodi, CA 95240-8908",299000,295695
 "323 E Vine, Lodi, CA 95240",189900,188412
 "549 Swallow Ln, Lodi, CA 95240-6388",309000,302705
@@ -100,8 +100,8 @@ Address,Listing Price,Predicted Selling Price
 "2139 Jayhawk, Lodi, CA 95240",340000,306505
 "736 Golden Ave, Lodi, CA 95240",359000,354812
 "683 Sandpiper Cir, Lodi, CA 95240-8803",295000,289206
-"1035 Woodrow St, Lodi, CA 95240-4322",235000,232331
-"2111 Squire Way, Lodi, CA 95240",315000,311693
+"1035 Woodrow St, Lodi, CA 95240-4322",235000,232004
+"2111 Squire Way, Lodi, CA 95240",315000,311366
 "1842 Robin Ln, Lodi, CA 95240-7825",349000,342809
 "442 San Pietro Ln, Lodi, CA 95240",309900,307519
 "3607 Ignacio Cir, Stockton, CA 95209-3900",288800,286130
@@ -109,9 +109,9 @@ Address,Listing Price,Predicted Selling Price
 "831 Rubino Ct, Stockton, CA 95209-4355",349000,345480
 "3808 Des Moines Dr, Stockton, CA 95209-3756",359900,356519
 "3986 Vancouver Cir, Stockton, CA 95209-3732",365000,360894
-"3738 Oak Shores Dr, Stockton, CA 95209-3763",369900,368675
+"3738 Oak Shores Dr, Stockton, CA 95209-3763",369900,368622
 "4132 Black Butte Cir, Stockton, CA 95209-3502",387000,383493
-"4192 MADDIE Cir, Stockton, CA 95209-3805",395000,390564
+"4192 MADDIE Cir, Stockton, CA 95209-3805",395000,389894
 "10952 Lands End Dr, Stockton, CA 95209-4289",405000,398208
 "3442 Grandi Cir, Stockton, CA 95209-3913",415000,403059
 "10118 Kayla Ave, Stockton, CA 95209",442990,432471
@@ -124,7 +124,7 @@ Address,Listing Price,Predicted Selling Price
 "10450 Tank House Dr, Stockton, CA 95209-4338",394000,391190
 "10804 Tank House, Stockton, CA 95209-4342",369900,366654
 "1016 Cypress Run Dr, Stockton, CA 95209-4544",349900,344830
-"3470 Tupelo Dr, Stockton, CA 95209-3743",345000,342800
+"3470 Tupelo Dr, Stockton, CA 95209-3743",345000,342681
 "10162 Macon Dr, Stockton, CA 95209-4525",332800,331071
 "2444 Mystic Ct, Stockton, CA 95209-4220",329900,327340
 "10331 Lombard Ct, Stockton, CA 95209",329000,322465
@@ -139,6 +139,6 @@ Address,Listing Price,Predicted Selling Price
 "10482 River Oaks Dr, Stockton, CA 95209-4102",379900,372619
 "3641 Oak Shores Dr, Stockton, CA 95209-3763",378000,369273
 "166 Villa Point Dr, Stockton, CA 95209",360415,356792
-"5449 Ridgeview Cir, Stockton, CA 95219",329000,322900
+"5449 Ridgeview Cir, Stockton, CA 95219",329000,322815
 "10303 Oak Crest Ct, Stockton, CA 95209-4526",320000,315581
 "3477 Mesa Verde Cir, Stockton, CA 95209",499000,481859
