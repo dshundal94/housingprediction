@@ -6,6 +6,8 @@
 # ****the XGBoost algorithm. The target variable is continuous so regression is used.
 # ****Currently, there are 13 features, with hopes of including more features in the 
 # ****in the future. 
+#
+#**** - Created by Damanjit Hundal
 
 
 import pandas as pd
@@ -18,8 +20,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import r2_score
 from sklearn import ensemble
 from sklearn import model_selection, metrics
-import sys
-sys.path.append("C:/Users/Damanjit/Documents/xgboost_code/xgboost/wrapper")
 import xgboost as xgb
 from xgboost.sklearn import XGBRegressor
 
