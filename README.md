@@ -28,5 +28,5 @@ Some of the values of Lot Size and Year Built are missing or are inputted as 0, 
 Last Update: 12/15/2016
 
 UPDATE: 1/10/2017
-Included a general script with a larger dataset of about 75,000 training sample points. The general script imputes missing data based on the different zip codes, where 
+Included a general script (pricepredict.py) with a larger dataset (in the data folder) of about 75,000 training sample points. The general script imputes missing data based on the different zip codes, where 
 now nothing is hard coded, but generalized to the dataset. 
